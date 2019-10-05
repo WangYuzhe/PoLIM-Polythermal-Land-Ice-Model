@@ -1,7 +1,9 @@
 # PoLIM (Polythermal Land Ice Model)
 
 ## Authors
-Wang Yuzhe (1,2), Zhang Tong (3)**
+Wang Yuzhe (1,2)
+
+Zhang Tong (3)
 
 ## Affiliations
 1. State Key Laboratory of Cryospheric Sciences, Chinese Academy of Sciences, China
