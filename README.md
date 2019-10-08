@@ -11,7 +11,7 @@ PoLIM is a 2D flowband thermomechanical ice flow model. It uese Blatter-Pattyn h
 PoLIM is validated using the ISMIP-HOM benchmark experiments and Kleiner's enthalpy benchmark experiments. PoLIM also implements the Schoof-Hewitt water transportation scheme in temperate ice and a cavity-sheet subglacial hydrology model.
 
 ## Citation
-A paper describing PoLIM is prepared and will be soon submitted.
+A paper introducing PoLIM is being prepared and will be soon submitted.
 
 If you used PoLIM for your work, and you could cite the following papers:
 
