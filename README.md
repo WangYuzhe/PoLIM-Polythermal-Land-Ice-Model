@@ -6,7 +6,7 @@ Wang Yuzhe (State Key Laboratory of Cryospheric Sciences, Chinese Academy of Sci
 Zhang Tong (Fluid Dynamics and Solid Mechanics Group, Los Alamos National Laboratory, USA. zhgtong@gmail.com)
 
 ## Descriptions
-PoLIM is a 2D flowband thermomechanical ice flow model. It uese Blatter-Pattyn higher-order approximations and describes the energy transportation using the enthalpy method. It is designed for the simulation of mountain glaciers dynamics, and can be used to model the polythermal structure of the moutain glacier.
+PoLIM is a 2D flowband thermomechanical ice flow model. It uses Blatter-Pattyn higher-order approximations and describes the energy transportation using the enthalpy method. It is designed for the simulation of mountain glaciers dynamics, and can be used to model the polythermal structure of the moutain glacier.
 
 PoLIM is validated using the ISMIP-HOM benchmark experiments and Kleiner's enthalpy benchmark experiments. PoLIM also implements the Schoof-Hewitt water transportation scheme in temperate ice and a cavity-sheet subglacial hydrology model.
 
