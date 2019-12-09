@@ -1,7 +1,14 @@
 function [Hn] = get_evolution_continuity(u, B)
 % The continuity equation is converted into a diffusion equation (Pattyn 2002,
 % Pimentel 2011).
-% Discretization of the continuity equation uses the semi-implicit metHnd.
+% Discretization of the continuity equation uses the semi-implicit metHnd
+
+% Inputs:
+% u: horizontal velocity field
+% B: mass balance
+
+% Outputs:
+% Hn: ice thickness
 
 global M N dzeta dx hS hB H W dhSdx
 

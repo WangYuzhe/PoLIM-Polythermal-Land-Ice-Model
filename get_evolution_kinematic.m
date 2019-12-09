@@ -1,6 +1,5 @@
 % Relaxation of the free surface based on kinematic boundary.
-% History:
-% 2016-8-25
+% Date: 2016-8-25
 
 function [hS_new] = get_evolution_kinematic(u, w, B)
 global hS hB H Hmin M dx
