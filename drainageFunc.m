@@ -2,7 +2,7 @@ function drainageRate = drainageFunc(omega)
 % Date: 2019/4/19
 % Author: Wang Yuzhe
 % drainage rate per year [a-1]
-% References: Greve (2007, application), Aschwanden (2012): p450
+% References: Greve (1997, application), Aschwanden (2012): p450
 
 % Input:
 % omega: water content in the temperate ice
