@@ -1,4 +1,4 @@
-% Run the ISMIP-HOM experiment E (Exp. E: Haut Glacier d¡¯Arolla)
+% Run the ISMIP-HOM experiment E (Exp. E: Haut Glacier dÂ¡Â¯Arolla)
 % id_exp = 'e000': the first experiment (E1)
 % id_exp = 'e001': the second experiment (E2)
 
@@ -10,7 +10,7 @@ global SPY N M Ms iter_max iter_u u_s_lst iTimeStep
 
 id_exp = 'e000'; % expE2: e001
 if strcmp(id_exp, 'e000')
-    set_ice_parameters_ismip_hom(1,2,3,0) % id_type_BBC, id_type_geometry, id_type_valley, id_isFlowband
+    set_ice_parameters_ismip_hom(1,1,3,0) % id_type_BBC, id_type_geometry, id_type_valley, id_isFlowband
 else
     set_ice_parameters_ismip_hom(4,2,3,0)
 end
