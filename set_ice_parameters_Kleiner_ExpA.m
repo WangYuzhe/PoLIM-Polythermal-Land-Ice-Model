@@ -15,4 +15,4 @@ rhow = 1000;      % water density [kg m-3]
 Kc = kc/(rho*Cp); % [m2 s-1]
 Kt = 1.1e-9; % [m2 s-1]
 
-type_geometry = 2;
+type_geometry = 3;
