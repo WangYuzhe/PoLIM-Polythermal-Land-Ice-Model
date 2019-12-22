@@ -15,4 +15,4 @@ AGlen  = 5.3e-24;     % rate factor [Pa-3 s-1]
 Kc     = kc/(rho*Cp); % Thermal diffusivity of cold ice [m2 s-1]
 Kt     = 1.1e-11;      % Thermal diffusivity of temperate ice [m2 s-1][m2 s-1]
 
-type_geometry = 3;
+type_geometry = 4;
