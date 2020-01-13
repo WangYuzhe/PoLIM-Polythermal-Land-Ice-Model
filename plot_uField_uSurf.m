@@ -34,4 +34,4 @@ set(hlgd, 'fontsize', 8, 'location', 'NorthWest');
 ylim([0 max(max(u)) + 20])
 title('Surface velocity')
 
-set(gcf, 'Position', [581 147 455 530])
+set(gcf, 'Position', [530 58 596 583])
