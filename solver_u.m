@@ -9,7 +9,7 @@ function [u_s] = solver_u(visc_s, visc, AGlen_s)
 
 global rho g n epsilon type_BBC beta2_s lambda_max m_max epr isFlowband...
     xi Ms N dx dzeta H_s W W_s dzetadx dzetadx_s dhSdx_s dhBdx_s iter_u...
-    u_s_lst
+    u_s_lst At_CTS iTimeStep
 
 L1 = 4*visc_s;
 L2 = 4*visc_s.*dzetadx_s.^2 + visc_s./(ones(N,1)*H_s).^2;
@@ -27,7 +27,6 @@ LsW = zeros(1,Ms);
 % Lb2_LFL = zeros(1,Ms);
 Lb_CFL = zeros(1,Ms);
 
-Neff = zeros(1,Ms);
 frozen = zeros(1,Ms);
 LHS = zeros(N*Ms, N*Ms);
 RHS = zeros(N*Ms,1);
@@ -367,44 +366,52 @@ switch type_BBC
         end
     case 2 % Coulomb friction law (taub = sigma_xz)
         Cb = 0.84*m_max;
-        Neff(i) = epr.*(rho*g*H_s);
-        for i = 1:Ms
-            if iter_u == 1
-                ubi = 0;
+        Neff = epr.*(rho*g*H_s);
+        for i=1:Ms
+            if iter_u==1
+                ubi = 0; % basal velocity
             else
-                ubi = u_s_lst(1,i);
+                ubi = u_s_lst(1,i); % basal velocity
             end
-            Lb_CFL(i) = 4*AGlen_s(1,i)*H_s(i)*dzeta*Cb(i)^n*Neff(i)^n*m_max(i)/...
-                (ubi*m_max(i) + Cb(i)^n*Neff(i)^n*lambda_max(i)*AGlen_s(1,i)); % /(1+(H_s(i)/W_s(1,i))^2)
+            %             Lb_CFL(i) = 4*AGlen_s(1,i)*H_s(i)*dzeta*Cb(i)^n*Neff(i)^n*m_max(i)/...
+            %                 (ubi*m_max(i) + Cb(i)^n*Neff(i)^n*lambda_max(i)*AGlen_s(1,i)); % /(1+(H_s(i)/W_s(1,i))^2)
+            Lb_CFL(i) = 4*AGlen_s(1,i)*H_s(i)*dzeta*Cb^n*Neff(i)^n*m_max/...
+                (ubi*m_max + Cb^n*Neff(i)^n*lambda_max*AGlen_s(1,i)); % /(1+(H_s(i)/W_s(1,i))^2)
         end
         frozeni = 0;
         for i=2:Ms-1
-            %         if T_lst(1,i) >= (273.15 - H(i)*8.7e-4 - 0.2) % local melting
-            if T_lst(1,i) == (273.15 - H(i)*8.7e-4) % local melting
-                if i == 2
-                    LHS((i-1)*N+1,(i-2)*N+1) = 8*L1(1,i)/(3*dx^2) - 4*Lb_CFL(i-1)*L3(1,i)/(6*dx*dzeta) - 4*L5(1,i)/(3*dx);
-                    LHS((i-1)*N+1,(i-1)*N+1) = -12*L1(1,i)/(3*dx^2) - (2+Lb_CFL(i))*L2(1,i)/(dzeta^2) +...
-                        3*L3(1,i)*Lb_CFL(i)/(6*dx*dzeta) + Lb_CFL(i)*L4(1,i)/(2*dzeta) + 3*L5(1,i)/(3*dx) + L6(1,i);
-                    LHS((i-1)*N+1,(i-1)*N+2) = 2*L2(1,i)/dzeta^2;
-                    LHS((i-1)*N+1,i*N+1) = 4*L1(1,i)/(3*dx^2) + Lb_CFL(i+1)*L3(1,i)/(6*dx*dzeta) + L5(1,i)/(3*dx);
-                elseif i == Ms-1
-                    LHS((i-1)*N+1,(i-2)*N+1) = 4*L1(1,i)/(3*dx^2) - Lb_CFL(i-1)*L3(1,i)/(6*dx*dzeta) - L5(1,i)/(3*dx);
-                    LHS((i-1)*N+1,(i-1)*N+1) = -12*L1(1,i)/(3*dx^2) - (2+Lb_CFL(i))*L2(1,i)/(dzeta^2) -...
-                        3*Lb_CFL(i)*L3(1,i)/(6*dx*dzeta) + Lb_CFL(i)*L4(1,i)/(2*dzeta) - 3*L5(1,i)/(3*dx) + L6(1,i);
-                    LHS((i-1)*N+1,(i-1)*N+2) = 2*L2(1,i)/dzeta^2;
-                    LHS((i-1)*N+1,i*N+1) = 8*L1(1,i)/(3*dx^2) + 4*Lb_CFL(i+1)*L3(1,i)/(6*dx*dzeta) + 4*L5(1,i)/(3*dx);
-                else
-                    LHS((i-1)*N+1,(i-2)*N+1) = L1(1,i)/(dx^2) - Lb_CFL(i-1)*L3(1,i)/(4*dx*dzeta) - L5(1,i)/(2*dx);
-                    LHS((i-1)*N+1,(i-1)*N+1) = -2*L1(1,i)/(dx^2) - (2+Lb_CFL(i))*L2(1,i)/(dzeta^2) +...
-                        Lb_CFL(i)*L4(1,i)/(2*dzeta) + L6(1,i);
-                    LHS((i-1)*N+1,(i-1)*N+2) = 2*L2(1,i)/(dzeta^2);
-                    LHS((i-1)*N+1,i*N+1) = L1(1,i)/(dx^2) + Lb_CFL(i+1)*L3(1,i)/(4*dx*dzeta) + L5(1,i)/(2*dx);
-                end
-            else % frozen to bedrock
+            if iTimeStep==1
                 frozeni = frozeni + 1; % number of the cold grids
                 frozen(frozeni) = i; % position of the frozeni-th cold grid
                 LHS((i-1)*N+1,(i-1)*N+1) = 1;
                 RHS((i-1)*N+1,1) = 0;
+            else
+                if At_CTS(iTimeStep-1,i)~=0 % local melting
+                    if i == 2
+                        LHS((i-1)*N+1,(i-2)*N+1) = 8*L1(1,i)/(3*dx^2) - 4*Lb_CFL(i-1)*L3(1,i)/(6*dx*dzeta) - 4*L5(1,i)/(3*dx);
+                        LHS((i-1)*N+1,(i-1)*N+1) = -12*L1(1,i)/(3*dx^2) - (2+Lb_CFL(i))*L2(1,i)/(dzeta^2) +...
+                            3*L3(1,i)*Lb_CFL(i)/(6*dx*dzeta) + Lb_CFL(i)*L4(1,i)/(2*dzeta) + 3*L5(1,i)/(3*dx) + L6(1,i);
+                        LHS((i-1)*N+1,(i-1)*N+2) = 2*L2(1,i)/dzeta^2;
+                        LHS((i-1)*N+1,i*N+1) = 4*L1(1,i)/(3*dx^2) + Lb_CFL(i+1)*L3(1,i)/(6*dx*dzeta) + L5(1,i)/(3*dx);
+                    elseif i == Ms-1
+                        LHS((i-1)*N+1,(i-2)*N+1) = 4*L1(1,i)/(3*dx^2) - Lb_CFL(i-1)*L3(1,i)/(6*dx*dzeta) - L5(1,i)/(3*dx);
+                        LHS((i-1)*N+1,(i-1)*N+1) = -12*L1(1,i)/(3*dx^2) - (2+Lb_CFL(i))*L2(1,i)/(dzeta^2) -...
+                            3*Lb_CFL(i)*L3(1,i)/(6*dx*dzeta) + Lb_CFL(i)*L4(1,i)/(2*dzeta) - 3*L5(1,i)/(3*dx) + L6(1,i);
+                        LHS((i-1)*N+1,(i-1)*N+2) = 2*L2(1,i)/dzeta^2;
+                        LHS((i-1)*N+1,i*N+1) = 8*L1(1,i)/(3*dx^2) + 4*Lb_CFL(i+1)*L3(1,i)/(6*dx*dzeta) + 4*L5(1,i)/(3*dx);
+                    else
+                        LHS((i-1)*N+1,(i-2)*N+1) = L1(1,i)/(dx^2) - Lb_CFL(i-1)*L3(1,i)/(4*dx*dzeta) - L5(1,i)/(2*dx);
+                        LHS((i-1)*N+1,(i-1)*N+1) = -2*L1(1,i)/(dx^2) - (2+Lb_CFL(i))*L2(1,i)/(dzeta^2) +...
+                            Lb_CFL(i)*L4(1,i)/(2*dzeta) + L6(1,i);
+                        LHS((i-1)*N+1,(i-1)*N+2) = 2*L2(1,i)/(dzeta^2);
+                        LHS((i-1)*N+1,i*N+1) = L1(1,i)/(dx^2) + Lb_CFL(i+1)*L3(1,i)/(4*dx*dzeta) + L5(1,i)/(2*dx);
+                    end
+                else % frozen to bedrock
+                    frozeni = frozeni + 1; % number of the cold grids
+                    frozen(frozeni) = i; % position of the frozeni-th cold grid
+                    LHS((i-1)*N+1,(i-1)*N+1) = 1;
+                    RHS((i-1)*N+1,1) = 0;
+                end
             end
         end
     case 3 % linear friction law
@@ -454,7 +461,7 @@ switch type_BBC
         xi_s = [xi(1), (xi(1:end-1)+xi(2:end))/2, xi(end)];
         for i = 2:Ms-1
             if xi_s(i) >= 2200 && xi_s(i) <= 2500
-%             if  xi(i) >= 2200 && xi(i) <= 2500
+                %             if  xi(i) >= 2200 && xi(i) <= 2500
                 RHS((i-1)*N+1,1) = rho*g*dhSdx_s(i);
                 
                 LHS((i-1)*N+1, (i-3)*N+1) = Lb1_LFL(i-1)*L3(1,i)/(4*dx*dzeta);

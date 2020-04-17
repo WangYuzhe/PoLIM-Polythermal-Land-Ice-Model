@@ -3,7 +3,7 @@ clearvars
 clearvars -global
 
 global SPY N M Ms iter_max iter_u u_s_lst iTimeStep type_thermal_model...
-    At_E At_T At_omega At_Kappa_s At_Hw At_Ht At_isTemperate...
+    At_E At_T At_omega At_CTS At_Kappa_s At_Hw At_Ht At_isTemperate...
     At_temperateWaterFluxDarcy
 
 set_ice_parameters;
@@ -12,7 +12,7 @@ set_ice_geometry();
 % Time setting
 dt = 1; % [a]
 endTime = 50;
-[arrayTime, numTimeStep] = set_time_step(dt, 50);
+[arrayTime, numTimeStep] = set_time_step(dt, endTime);
 %% Initialization
 AGlen_s = zeros(N,Ms) + 1e-16; % [Pa-3 a-1]
 visc_s = zeros(N,Ms) + 1e13/SPY; % [Pa a]
@@ -110,10 +110,12 @@ for iTimeStep = 1:numTimeStep
         switch type_thermal_model
             case 1 % standard enthalpy gradient model
                 [E, T, omega, Kappa_s, CTS, Ht, basalMeltRate, temperateWaterFlux, drainToBed] = ...
-                    solver_enthalpy_SEGM(u, u_s, w, w_vs, strainHeat, dt, Esbc, Eini, is_auto_thermalBasalBC, type_thermalBasalBC, has_Greve_drainage);
+                    solver_enthalpy_SEGM(u, u_s, w, w_vs, strainHeat, dt,...
+                    Esbc, Eini, is_auto_thermalBasalBC, type_thermalBasalBC, has_Greve_drainage);
             case 2  % modified enthalpy gradient model
                 [E, T, omega, Kappa_s, CTS, Ht, basalMeltRate, temperateWaterFlux, temperateWaterFluxDarcy] =...
-                    solver_enthalpy_MEGM(u, u_s, w, w_vs, strainHeat, dt, Esbc, Eini, is_auto_thermalBasalBC, type_thermalBasalBC);
+                    solver_enthalpy_MEGM(u, u_s, w, w_vs, strainHeat, dt,...
+                    Esbc, Eini, is_auto_thermalBasalBC, type_thermalBasalBC);
             case 3 % isothermal assumption
         end
         

@@ -38,7 +38,7 @@ type_geometry = 6;
 % 4: Hewitt-Schoof Ice Cap Experiment
 % 5: SHMIP valley glacier
 
-type_BBC = 1;
+type_BBC = 2;
 % 1: no-slip bed
 % 2: Coulomb friction law
 % 3: linear friction law
