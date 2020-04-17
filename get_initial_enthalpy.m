@@ -8,7 +8,7 @@ function [E] = get_initial_enthalpy(Esbc)
 % outputs:
 % E: enthalpy field
 
-global kc Cp G M N dzeta H Kc
+global kc Cp Qgeo M N dzeta H Kc
 
 % initialization
 LT1 = zeros(N,1);
@@ -37,7 +37,7 @@ for i = 1:M
     LT1(1) = 0;
     LT2(1) = -1/dzeta;
     LT3(1) = 1/dzeta;
-    RT(1) = -G*H(i)*Cp/kc;
+    RT(1) = -Qgeo*H(i)*Cp/kc;
     
     % left-hand system
     LT = spdiags([[LT1(2:end);0], LT2, [0;LT3(1:end-1)]], [-1,0,1], N, N);

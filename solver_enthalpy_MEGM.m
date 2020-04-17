@@ -5,9 +5,9 @@
 
 function [E, T, omega, Kappa_s, CTS, Ht, basalMeltRate, temperateWaterFlux, temperateWaterFluxDarcy] =...
     solver_enthalpy_MEGM(u, u_s, w, w_vs, strainHeat, dt, Esbc, Eini, is_auto_thermalBasalBC, type_thermalBasalBC)
-global SPY rho g kc Cp Qgeo betaCC rhow Lw Tref Kc Kt k0 eta_w
-global M N dx dzeta zeta H dzetadx
-global iTimeStep At_E At_Hw At_Ht At_Kappa_s At_isTemperate At_temperateWaterFluxDarcy
+global SPY rho g kc Cp Qgeo betaCC rhow Lw Tref Kc Kt k0 eta_w...
+    M N dx dzeta zeta H dzetadx iTimeStep...
+    At_E At_Hw At_Ht At_Kappa_s At_isTemperate At_temperateWaterFluxDarcy
 
 % convert [xx a-1] to [xx s-1]
 dt = dt*SPY;

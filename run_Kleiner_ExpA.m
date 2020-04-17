@@ -45,7 +45,7 @@ Esbc = Cp*(Tsbc - Tref);
 % options for the thermal model
 is_auto_thermalBasalBC = 1;
 type_thermalBasalBC = 1;
-has_Greve_drainage = 1;
+has_Greve_drainage = 0;
 
 for iTimeStep = 1:numTimeStep
     yr = arrayTime(iTimeStep);
@@ -80,4 +80,4 @@ toc
 
 plot_enthalpy_ExpA
 
-save result_enthA arrayTime At_basalT At_basalMeltRate At_Hw
+%save result_enthA arrayTime At_basalT At_basalMeltRate At_Hw

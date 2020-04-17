@@ -53,8 +53,8 @@ type_Arrhenius = 1;
 % 2: Cuffey & Paterson (2010)
 
 type_thermal_model = 3;
-% 1: Aschwanden (2012)
-% 2: Hewitt & Schoof (2017)
+% 1: standard enthalpy gradient model (SEGM; Aschwanden et al., 2012)
+% 2: modified enthalpy gradient model (MEGM; Hewitt I. and Schoof C., 2017)
 % 3: isothermal
 
 isFlowband = 0;
