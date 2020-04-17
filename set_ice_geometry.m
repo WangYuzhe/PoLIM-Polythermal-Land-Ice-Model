@@ -76,7 +76,7 @@ switch type_geometry
         logic1 = (hS-hB) > 0;
         hB = logic1.*hB + (1-logic1).*(hS - 0.1);
         H = hS - hB;
-
+        
         M = length(xi);
         Ms = M + 1;
         
@@ -142,5 +142,50 @@ switch type_geometry
         dzeta = 1/(N-1);
         zeta = linspace(0,1,N);
         zeta = zeta';
+    case 6 % Storglaciaeren example
+        geoGlacier = load('geoStorglaciaeren.mat');
+        geoGlacier = geoGlacier.sg;
+        geoGlacier = geoGlacier';
+        
+        % origin
+        xi = geoGlacier(1, 5:104);
+        hB = geoGlacier(2, 5:104);
+        hS = geoGlacier(3, 5:104);
+        H = geoGlacier(4, 5:104) + 0.1;
+        
+        dx = xi(2) - xi(1);
+        M = length(xi);
+        Ms = M + 1;
+        
+        N = 31;
+        dzeta = 1/(N-1);
+        zeta = 0:dzeta:1;
+        zeta = zeta';
+        
+        % Half-width distribution
+        W = zeros(N,M);
+        switch type_valley
+            case 1 % trapezoid
+                alpha_trapezoid = 45*pi/180;
+                Wsurf = 10*ones(1,M);
+                for i = 1:M
+                    W(:,i) = Wsurf(i) - (H(i) - H(i)*zeta)/tan(alpha_trapezoid);
+                    
+                    % Make sure Wbase >= 1
+                    logic1 = (W(:,i) < 1e-3);
+                    W(:,i) = (1-logic1).*W(:,i) + 1*logic1;
+                end
+            case 2 % Svensson: y = ax^b
+                Wsurf = 500*ones(1,M);
+                for i=1:M
+                    W(:,i) = (zeta.^(1/q(i)))*Wsurf(i);
+                end
+                W(1,:) = W(2,:)/2;
+            case 3 % rectangular
+                Wsurf = 1000*ones(1,M);
+                W = ones(N,1)*Wsurf;
+        end
+        
+        W_s = [W(:,1), (W(:,2:end)+W(:,1:end-1))/2, W(:,end)];
 end
 end

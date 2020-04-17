@@ -2,22 +2,15 @@ function [Esbc] = set_thermalSBC()
 % set the surface boundary condition for the thermal model
 % 2019-2-15
 
-global rho Cp Tref hS M
+global Cp Tref hS hB M
 
-hS1 = 2500;
-T1 = -2 + 273.15;
-
-Tsbc = zeros(1,M);
-for i = 1:M
-    if hS(i) <= 2800
-        Tsbc(i) = -0.006*(hS(i)-hS1) + T1;
-    else
-        Tsbc(i) = -2 + 273.15;
-    end
-end
-
-% Esbc = rho*Cp*(Tsbc - Tref);
-
+% Storglaciaeren example
+T0 = 273.15;
+Tma =  -6.0; % degC, mean annual air temperature at Tarfala
+zcts = 1300; % m a.s.l.; altitude where CTS is at the surface, projected to topg
+slope = 100; % m; range around which surface temp transition happens
+Tsbc = T0 + Tma * (zcts + slope - hS) / (2.0 * slope);
+Tsbc(hS<zcts-slope) = T0 + Tma;
+Tsbc(hS>zcts+slope) = T0;
 Esbc = Cp*(Tsbc - Tref);
-
 end

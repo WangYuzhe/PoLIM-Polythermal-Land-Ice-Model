@@ -31,7 +31,7 @@ lambda_max = 4; % ref: 4
 m_max = 0.3; % ref: 0.3
 epr = 1; % N=Pi-Pw, epr=0, Pw=Pi; epr=1, Pw=0.
 
-type_geometry = 1;
+type_geometry = 6;
 % 1: longitudinal profile of mountain glacier (default is Haut d'Arolla)
 % 2: Kleiner Exp. A (parallel-sided slab)
 % 3: Kleiner Exp. B (polythermal parallel-sided slab)
@@ -48,15 +48,15 @@ type_valley = 3;
 % 2: Svessen: y=ax^b
 % 3: rectangular
 
-type_Arrhenius = 1;
+type_Arrhenius = 2;
 % 1: Greve (2009)
 % 2: Cuffey & Paterson (2010)
 
-type_thermal_model = 3;
+type_thermal_model = 1;
 % 1: standard enthalpy gradient model (SEGM; Aschwanden et al., 2012)
 % 2: modified enthalpy gradient model (MEGM; Hewitt I. and Schoof C., 2017)
 % 3: isothermal
 
-isFlowband = 0;
+isFlowband = 1;
 % true  (1): flowband mode
 % false (0): flowline mode

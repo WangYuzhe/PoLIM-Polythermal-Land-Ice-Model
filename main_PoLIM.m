@@ -11,7 +11,8 @@ set_ice_geometry();
 
 % Time setting
 dt = 1; % [a]
-[arrayTime, numTimeStep] = set_time_step(dt, 1);
+endTime = 50;
+[arrayTime, numTimeStep] = set_time_step(dt, 50);
 %% Initialization
 AGlen_s = zeros(N,Ms) + 1e-16; % [Pa-3 a-1]
 visc_s = zeros(N,Ms) + 1e13/SPY; % [Pa a]
@@ -42,11 +43,11 @@ At_hB = zeros(numTimeStep,M);
 At_H = zeros(numTimeStep,M);
 
 if type_thermal_model ~=3
-    % Initial enthalpy field
-    Eini = get_initial_enthalpy(Esbc);
-    
     % Thermal surface boundary condition
     Esbc = set_thermalSBC();
+    
+    % Initial enthalpy field
+    Eini = get_initial_enthalpy(Esbc);
 end
 
 %% options for the thermal model
@@ -109,10 +110,10 @@ for iTimeStep = 1:numTimeStep
         switch type_thermal_model
             case 1 % standard enthalpy gradient model
                 [E, T, omega, Kappa_s, CTS, Ht, basalMeltRate, temperateWaterFlux, drainToBed] = ...
-                    solver_enthalpy_SEGM(u, u_s, w, w_vs, strainHeat, dt, Esbc, Eini, is_auto_thermalBasalBC, type_thermalBasalBC, has_Greve_drainage);                
-           case 2  % modified enthalpy gradient model
+                    solver_enthalpy_SEGM(u, u_s, w, w_vs, strainHeat, dt, Esbc, Eini, is_auto_thermalBasalBC, type_thermalBasalBC, has_Greve_drainage);
+            case 2  % modified enthalpy gradient model
                 [E, T, omega, Kappa_s, CTS, Ht, basalMeltRate, temperateWaterFlux, temperateWaterFluxDarcy] =...
-                    solver_enthalpy_MEGM(u, u_s, w, w_vs, strainHeat, dt, Esbc, Eini, is_auto_thermalBasalBC, type_thermalBasalBC);               
+                    solver_enthalpy_MEGM(u, u_s, w, w_vs, strainHeat, dt, Esbc, Eini, is_auto_thermalBasalBC, type_thermalBasalBC);
             case 3 % isothermal assumption
         end
         
@@ -153,19 +154,19 @@ for iTimeStep = 1:numTimeStep
         logic1 = (At_Hw(iTimeStep,:)>0 & At_isTemperate(iTimeStep,:)==0);
         At_isTemperate(iTimeStep,:) = At_isTemperate(iTimeStep,:) | logic1;
     end
-
+    
     if type_thermal_model==1
-        At_drainToBed(:,:,iTimeStep) = drainToBed;
+        At_drainToBed(iTimeStep,:) = drainToBed;
     end
     
     if type_thermal_model==2
         At_temperateWaterFluxDarcy(:,:,iTimeStep) = temperateWaterFluxDarcy;
     end
-
+    
     
     fprintf('Mean surface velocity: %3.2f \n', mean(u(end,:)))
     fprintf('Max surface velocity: %3.2f \n', max(u(end,:)))
 end
 
-% plot_enthalpy_field
-plot_uField_uSurf
+plot_enthalpy_field
+% plot_uField_uSurf
