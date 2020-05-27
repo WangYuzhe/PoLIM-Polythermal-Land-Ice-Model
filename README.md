@@ -6,14 +6,15 @@ Wang Yuzhe (State Key Laboratory of Cryospheric Sciences, Chinese Academy of Sci
 Zhang Tong (Fluid Dynamics and Solid Mechanics Group, Los Alamos National Laboratory, USA. zhgtong@gmail.com)
 
 ## Descriptions
-PoLIM is a 2D flowband thermomechanical ice flow model. It uses Blatter-Pattyn higher-order approximations and describes the energy transportation using the enthalpy method. It is designed for modeling the dynamics of mountain glaciers, and can be used to model the polythermal structures of moutain glaciers.
+PoLIM is a 2D first-order flowband thermomechanical ice flow model. It is designed for modeling the dynamics and thermodynamics of mountain glaciers particularly for polythermal glaciers.
 
-PoLIM is validated by the ISMIP-HOM benchmark experiments and Kleiner's enthalpy benchmark experiments. PoLIM also implements the Schoof-Hewitt water transportation scheme in temperate ice and a cavity-sheet subglacial hydrology model.
+PoLIM has been verified by standard benchmark problems, including the ISMIP-HOM experiments, the enthalpy benchmark experiments, and the SHMIP experiments. PoLIM shows good performances and agrees well with these benchmark results, indicating its robust capability of simulating the thermomechanical behaviors of glaciers.
 
 ## Features
-* PoLIM implements an enthalpy-based thermal model which is particularly convenient to simulate the dynamics of polythermal glaciers.
-* PoLIM includes a drainage model to simulate the water transport in the temperate ice layer driven by gravity.
-* PoLIM includes a subglacial hydrology model to simulate the subglacial water pressure for the coupling with the basal sliding law.
+* PoLIM simplifies the momentum balance using the Blatter–Pattyn approximation.
+* PoLIM implements an enthalpy formulation of the energy balance equation.
+* PoLIM includes a scheme for gravity-driven drainage of water in temperate ice.
+* PoLIM couples a cavity-sheet type subglacial hydrology model to ice dynamics.
 
 
 ## Citation
