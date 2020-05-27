@@ -24,7 +24,6 @@ PoLIM is validated by the ISMIP-HOM benchmark experiments and Kleiner's enthalpy
   year     = {2020},
   pages    = {104526},
   volume   = {141},
-  abstract = {Understanding the dynamics of glaciers is essential for the knowledge of global sea-level rise, local freshwater resources in high mountain and arid regions, and the potential glacial hazards. In this paper, we present a two-dimensional thermomechanically coupled ice flow model named PoLIM (Polythermal Land Ice Model). The velocity solver of PoLIM is developed based on the Blatter–Pattyn approximation of Stokes flow. It uses an enthalpy formulation of the energy balance, an approach that is suitable for modeling the polythermal glaciers. PoLIM also includes a scheme for gravity-driven drainage of water in temperate ice, a subglacial hydrology model coupled with ice dynamics, and multiple basal sliding laws. The model has been verified by standard benchmark problems, including the ISMIP-HOM experiments, the enthalpy benchmark experiments, and the SHMIP experiments. PoLIM shows good performances and agrees well with these benchmark results, indicating its robust capability of simulating the thermomechanical behaviors of glaciers.},
   doi      = {https://doi.org/10.1016/j.cageo.2020.104526},
   issn     = {0098-3004},
   keywords = {Polythermal glacier, Ice flow model, Thermomechanical coupling, Mountain glacier dynamics},
