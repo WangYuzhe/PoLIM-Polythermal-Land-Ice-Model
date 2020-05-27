@@ -17,28 +17,16 @@ PoLIM is validated by the ISMIP-HOM benchmark experiments and Kleiner's enthalpy
 
 
 ## Citation
-A paper introducing PoLIM has been submitted on Computers & Geosciences.
-
-If you used PoLIM for your work, you could cite the following papers:
-
-@Article{ZhangTong2013,
-  author  = {Zhang, Tong and Xiao, Cunde and Colgan, William and Qin, Xiang and Du, Wentao and Sun, Weijun and Liu, Yushuo and Ding, Minghu},
-  title   = {Observed and modelled ice temperature and velocity along the main flowline of {E}ast {R}ongbuk {G}lacier, {Q}omolangma ({M}ount {E}verest), {H}imalaya},
-  journal = {Journal of Glaciology},
-  year    = {2013},
-  volume  = {59},
-  number  = {215},
-  pages   = {438-448},
-  doi     = {10.3189/2013JoG12J202}
-}
-
-@Article{WangYuzhe2018_tc,
-  author  = {Wang, Yuzhe. and Zhang, Tong. and Ren, Jiawen. and Qin, Xiang. and Liu, Yushuo. and Sun, Weijun. and Chen, Jizu. and Ding, Minghu. and Du, Wentao. and Qin, Dahe.},
-  title   = {An investigation of the thermomechanical features of Laohugou Glacier No. 12 on Qilian Shan, western China, using a two-dimensional first-order flow-band ice flow model},
-  journal = {The Cryosphere},
-  year    = {2018},
-  volume  = {12},
-  number  = {3},
-  pages   = {851--866},
-  doi     = {10.5194/tc-12-851-2018}
+@Article{WangYuzhe2020,
+  author   = {Yuzhe Wang and Tong Zhang and Cunde Xiao and Jiawen Ren and Yanfen Wang},
+  journal  = {Computers & Geosciences},
+  title    = {A two-dimensional, higher-order, enthalpy-based thermomechanical ice flow model for mountain glaciers and its benchmark experiments},
+  year     = {2020},
+  pages    = {104526},
+  volume   = {141},
+  abstract = {Understanding the dynamics of glaciers is essential for the knowledge of global sea-level rise, local freshwater resources in high mountain and arid regions, and the potential glacial hazards. In this paper, we present a two-dimensional thermomechanically coupled ice flow model named PoLIM (Polythermal Land Ice Model). The velocity solver of PoLIM is developed based on the Blatter–Pattyn approximation of Stokes flow. It uses an enthalpy formulation of the energy balance, an approach that is suitable for modeling the polythermal glaciers. PoLIM also includes a scheme for gravity-driven drainage of water in temperate ice, a subglacial hydrology model coupled with ice dynamics, and multiple basal sliding laws. The model has been verified by standard benchmark problems, including the ISMIP-HOM experiments, the enthalpy benchmark experiments, and the SHMIP experiments. PoLIM shows good performances and agrees well with these benchmark results, indicating its robust capability of simulating the thermomechanical behaviors of glaciers.},
+  doi      = {https://doi.org/10.1016/j.cageo.2020.104526},
+  issn     = {0098-3004},
+  keywords = {Polythermal glacier, Ice flow model, Thermomechanical coupling, Mountain glacier dynamics},
+  url      = {http://www.sciencedirect.com/science/article/pii/S0098300419311458},
 }
