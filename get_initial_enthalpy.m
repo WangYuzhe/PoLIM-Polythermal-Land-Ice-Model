@@ -2,12 +2,6 @@ function [E] = get_initial_enthalpy(Esbc)
 % get the initial enthalpy field considering only thermal diffusion
 % 2019-2-15
 
-% inputs:
-% Esbc: surface enthalpy
-
-% outputs:
-% E: enthalpy field
-
 global kc Cp Qgeo M N dzeta H Kc
 
 % initialization
