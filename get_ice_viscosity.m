@@ -1,17 +1,9 @@
 function [visc_s, visc, strain_heat] = get_ice_viscosity(u_s, u, AGlen_s)
-% Inputs:
-    % u_s [m a-1]
-    % u [m a-1]
-    % AGlen_s [Pa-3 a-1]
-% Outputs:
-    % visc_s [Pa a]
-    % visc [Pa a]
-    % strain_heat [Pa a-1]
 
 global Ms N dzeta dx de0 n dzetadx_s H_s W W_s isFlowband
 
-de2_s=zeros(N,Ms); % [a-2]
-visc_s=zeros(N,Ms); % [Pa a]
+de2_s=zeros(N,Ms);
+visc_s=zeros(N,Ms);
 for i = 1:Ms
     for j = 2:N-1
         
@@ -144,6 +136,6 @@ for i = 1:Ms
     end
 end
 visc = staggerX2main(visc_s);
-strain_heat_s = 4*visc_s.*de2_s; % [Pa a-1]
-strain_heat = staggerX2main(strain_heat_s); % [Pa a-1]
+strain_heat_s = 4*visc_s.*de2_s;
+strain_heat = staggerX2main(strain_heat_s);
 end
