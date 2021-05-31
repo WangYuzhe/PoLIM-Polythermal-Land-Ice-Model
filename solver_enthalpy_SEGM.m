@@ -9,23 +9,19 @@ global SPY rho g kc Cp Qgeo betaCC rhow Lw Tref Kc Kt...
     M N dx dzeta zeta H dzetadx iTimeStep...
     At_E At_Hw At_Ht At_Kappa_s At_isTemperate At_omega
 
-% convert [xx a-1] to [xx s-1]
 dt = dt*SPY;
-u = u/SPY; % [m s-1]
-u_s = u_s/SPY; % [m s-1]
-w = w/SPY;  % [m s-1]
-w_vs = w_vs/SPY; % [m s-1]
-strainHeat = strainHeat/SPY; % [Pa s-1];
+u = u/SPY;
+u_s = u_s/SPY;
+w = w/SPY;
+w_vs = w_vs/SPY;
+strainHeat = strainHeat/SPY;
 
-% 'var_vs' means the secondary grid point in zeta coordinate
-dzetadx_vs = (dzetadx(1:end-1,:) + dzetadx(2:end,:))/2; % <N-1 * M>
-u_vs = (u(1:end-1,:) + u(2:end,:))/2; % <N-1 * M>
+dzetadx_vs = (dzetadx(1:end-1,:) + dzetadx(2:end,:))/2;
+u_vs = (u(1:end-1,:) + u(2:end,:))/2;
 
-% coefficient for the vertical derivative of enthalpy (\partial E / \partial zeta)
-coeff = u.*dzetadx + w./(ones(N,1)*H); % [s-1]; <N * M>
-coeff_vs = u_vs.*dzetadx_vs + w_vs(1:N-1, :)./(ones(N-1,1)*H); % [s-1]; <N-1 * M>
+coeff = u.*dzetadx + w./(ones(N,1)*H);
+coeff_vs = u_vs.*dzetadx_vs + w_vs(1:N-1, :)./(ones(N-1,1)*H);
 
-% initialization
 LT1 = zeros(N,1);
 LT2 = zeros(N,1);
 LT3 = zeros(N,1);
@@ -56,14 +52,13 @@ else
 end
 
 for i = 1:M
-    
-    % Enthalpy at the pressure-melting point for the i-th column
-    Tpmp_i = 273.15 - betaCC*rho*g*H(i)*(1-zeta); % <N * 1>
-    Epmp_i = Cp*(Tpmp_i - Tref); % <N * 1>
+        
+    Tpmp_i = 273.15 - betaCC*rho*g*H(i)*(1-zeta);
+    Epmp_i = Cp*(Tpmp_i - Tref);
     
     for j = 2:N-1
         if has_Greve_drainage
-            drainageRate(j) = drainageFunc(omega4drainage(j,i))/SPY; % [s-1]
+            drainageRate(j) = drainageFunc(omega4drainage(j,i))/SPY;
         else
             drainageRate(j) = 0;
         end
@@ -86,12 +81,10 @@ for i = 1:M
             LT3(j) = coeff_vs(j,i)/dzeta - Kappa_s(j,i)/(H(i)^2*dzeta^2);
         end
     end
-    
-    % surface BC
+
     LT1(N) = 0; LT2(N) = 1; LT3(N) = 0; RT(N) = Esbc(i);
-    
-    % basal BC
-    if is_auto_thermalBasalBC % decision chart (Aschwanden et al., 2012, Figure 5)
+
+    if is_auto_thermalBasalBC
         if iTimeStep == 1
             [LT, RT] = basalBC_cold_base_dry(LT1, LT2, LT3, RT, H(i));
         else
@@ -109,7 +102,7 @@ for i = 1:M
                 end
             end
         end
-    else % Do not use the decision chart. But specify a type of basal boundary condition.
+    else
         switch type_thermalBasalBC
             case 1
                 [LT, RT] = basalBC_cold_base_dry(LT1, LT2, LT3, RT, H(i));
@@ -121,23 +114,20 @@ for i = 1:M
                 [LT, RT] = basalBC_cold_base_wet(LT1, LT2, LT3, RT, Epmp_i);
         end        
     end
+
+    E(:,i) = LT\RT;
     
-    % solution
-    E(:,i) = LT\RT; % <N * 1>
-    
-    logic1 = E(:,i) >= Epmp_i; % 1: temperate; 0: cold. <N * 1>
+    logic1 = E(:,i) >= Epmp_i;
     T(:,i) = logic1.*Tpmp_i + (1-logic1).*(E(:,i)/Cp + Tref);
     omega(:,i) = logic1.*(E(:,i) - Epmp_i)/Lw;
-        
-    % If cold base, 'jcts' is an empty array.
-    % If temperate base or temperate layer, 'jcts' >= 1
+
     jcts = find(logic1, 1, 'last');
     
-    if isempty(jcts)      %% COLD
+    if isempty(jcts)
         CTS(i) = 0;
         Ht(i) = 0;
         basalMeltRate(i) = 0;
-    else                  %% TEMPERATE
+    else
         CTS(i) = jcts;
         Ht(i) = (jcts-1)*H(i)*dzeta;
         Kappa(1:jcts-1) = Kt;
@@ -167,14 +157,11 @@ for i = 1:M
         E(:,i) = LT\RT;
         basalMeltRate(i) = (Qgeo + kc/Cp*(E(2,i)-E(1,i))/(H(i)*dzeta))/(rhow*Lw)*SPY; % [m a-1]
     end
-    
-    % calculate the water flux
+
     temperateWaterFlux(:,i) = -Kt*(omega(2:end,i) - omega(1:end-1,i))/(H(i)*dzeta);
 
-    % vertically integrated drainage [m s-1]
-    drainToBed(i) = sum(drainageRate)*H(i)*dzeta; % [m s-1]
-    
-    % set the upper bound of the water content (3%)
+    drainToBed(i) = sum(drainageRate)*H(i)*dzeta;
+
     index1 = omega(:,i) > 3/100;
     index2 = omega(:,i) <= 3/100;
     omega(:,i) = index1*3/100 + index2.*omega(:,i);
