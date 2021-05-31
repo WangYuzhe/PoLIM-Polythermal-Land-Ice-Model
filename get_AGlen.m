@@ -3,12 +3,6 @@ function [AGlen_s] = get_AGlen(T)
 % Author: Wang Yuzhe
 % Calculate the flow rate factor A.
 
-% Input:
-% T: temperature
-
-% Output:
-% AGlen_s: flow rate factor A on staggered grid.
-
 global N M H zeta SPY R betaCC type_Arrhenius
 
 AGlen = zeros(N,M);
