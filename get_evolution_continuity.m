@@ -3,13 +3,6 @@ function [Hn] = get_evolution_continuity(u, B)
 % Pimentel 2011).
 % Discretization of the continuity equation uses the semi-implicit metHnd
 
-% Inputs:
-% u: horizontal velocity field
-% B: mass balance
-
-% Outputs:
-% Hn: ice thickness
-
 global M N dzeta dx hS hB H W dhSdx
 
 type_formulation = 1;
