@@ -9,20 +9,16 @@ global SPY N M Ms iter_max iter_u u_s_lst iTimeStep type_thermal_model...
 set_ice_parameters;
 set_ice_geometry();
 
-% Time setting
-dt = 1; % [a]
+dt = 1;
 endTime = 50;
 [arrayTime, numTimeStep] = set_time_step(dt, endTime);
-%% Initialization
-AGlen_s = zeros(N,Ms) + 1e-16; % [Pa-3 a-1]
-visc_s = zeros(N,Ms) + 1e13/SPY; % [Pa a]
-visc = zeros(N,M) + 1e13/SPY; % [Pa a]
 
-%  Related to velocity solver
+AGlen_s = zeros(N,Ms) + 1e-16;
+visc_s = zeros(N,Ms) + 1e13/SPY;
+visc = zeros(N,M) + 1e13/SPY;
+
 At_u = zeros(N,M,numTimeStep);
 At_w = zeros(N,M,numTimeStep);
-
-%  Related to enthalpy solver
 At_E                       = zeros(N, M, numTimeStep);
 At_T                       = zeros(N, M, numTimeStep);
 At_omega                   = zeros(N, M, numTimeStep);
@@ -36,26 +32,20 @@ At_isTemperate             = zeros(numTimeStep, M);
 At_temperateWaterFlux      = zeros(N-1, M, numTimeStep);
 At_temperateWaterFluxDarcy = zeros(N-1,M,numTimeStep);
 At_drainToBed              = zeros(numTimeStep, M);
-
-%  Related to glacier evolution
 At_hS = zeros(numTimeStep,M);
 At_hB = zeros(numTimeStep,M);
 At_H = zeros(numTimeStep,M);
 
 if type_thermal_model ~=3
-    % Thermal surface boundary condition
     Esbc = set_thermalSBC();
-    
-    % Initial enthalpy field
+
     Eini = get_initial_enthalpy(Esbc);
 end
 
-%% options for the thermal model
 is_auto_thermalBasalBC = 1;
 type_thermalBasalBC = 1;
 has_Greve_drainage = 1;
 
-%% MAIN
 for iTimeStep = 1:numTimeStep
     fprintf('iTimeStep: %d \n', iTimeStep)
     
@@ -100,13 +90,10 @@ for iTimeStep = 1:numTimeStep
         %-------------------------Picard iteration-------------------------
         u = staggerX2main(u_s);
         
-        % calculate the vertical velocity field
         [w_vs, w] = get_ice_w(u_s, u);
-        
-        % calculate the strain heat field
+         
         [~, ~, strainHeat] = get_ice_viscosity(u_s, u, AGlen_s);
         
-        % calculate the enthalpy field
         switch type_thermal_model
             case 1 % standard enthalpy gradient model
                 [E, T, omega, Kappa_s, CTS, Ht, basalMeltRate, temperateWaterFlux, drainToBed] = ...
@@ -119,12 +106,10 @@ for iTimeStep = 1:numTimeStep
             case 3 % isothermal assumption
         end
         
-        % calculate the AGlen field
         if type_thermal_model ~= 3
             AGlen_s = get_AGlen(T);
         end
-        
-        % update the viscosity
+
         [visc_s, visc, ~] = get_ice_viscosity(u_s, u, AGlen_s);
     end
     
@@ -144,15 +129,13 @@ for iTimeStep = 1:numTimeStep
         At_basalMeltRate(iTimeStep,:) = basalMeltRate;
         At_basalT(iTimeStep,:) = T(1,:);
         At_temperateWaterFlux(:,:,iTimeStep) = temperateWaterFlux;
-        
-        % calculate the basal water layer thickness
+
         if iTimeStep == 1
             At_Hw(iTimeStep,:) = zeros(1,M) + dt*basalMeltRate;
         else
             At_Hw(iTimeStep,:) = At_Hw(iTimeStep-1,:) + dt*basalMeltRate;
         end
-        
-        % logic value for basal thermal state
+
         logic1 = (At_Hw(iTimeStep,:)>0 & At_isTemperate(iTimeStep,:)==0);
         At_isTemperate(iTimeStep,:) = At_isTemperate(iTimeStep,:) | logic1;
     end
