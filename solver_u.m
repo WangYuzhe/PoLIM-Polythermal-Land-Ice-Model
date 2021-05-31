@@ -1,11 +1,4 @@
 function [u_s] = solver_u(visc_s, visc, AGlen_s)
-% Inputs:
-% visc_s [Pa a]
-% visc [Pa a]
-% AGlen_s [Pa-3 a-1]
-
-% Outputs:
-% u_s [m a-1]
 
 global rho g n epsilon type_BBC beta2_s lambda_max m_max epr isFlowband...
     xi Ms N dx dzeta H_s W W_s dzetadx dzetadx_s dhSdx_s dhBdx_s iter_u...
@@ -23,19 +16,16 @@ Ls1 = zeros(1,Ms);
 Ls2 = zeros(1,Ms);
 LsW = zeros(1,Ms);
 
-% Lb1_LFL = zeros(1,Ms);
-% Lb2_LFL = zeros(1,Ms);
 Lb_CFL = zeros(1,Ms);
 
 frozen = zeros(1,Ms);
 LHS = zeros(N*Ms, N*Ms);
 RHS = zeros(N*Ms,1);
-%------------------------------Build main----------------------------------
+
 for i = 2:Ms-1
     for j = 2:N-1
         k = (i-1)*N + j;
-        RHS(k,1) = rho*g*dhSdx_s(i);
-        %-----------------------------L4-------------------------------
+        RHS(k,1) = rho*g*dhSdx_s(i);        
         if i == 2
             L4(j,i) = 4*visc_s(j,i)*(-4*dzetadx_s(j,i-1)+3*dzetadx_s(j,i)+dzetadx_s(j,i+1))/(3*dx)+ ...
                 4*visc_s(j,i)*dzetadx_s(j,i)*(dzetadx_s(j+1,i)-dzetadx_s(j-1,i))/(2*dzeta) + ...
@@ -102,7 +92,7 @@ for i = 2:Ms-1
                 dzetadx_s(1,i)*(2*visc_s(1,i)/W_s(1,i))*...
                 ((W(1,i)-W(1,i-1))/(dx)+dzetadx_s(1,i)*(-3*W_s(1,i)+4*W_s(2,i)-W_s(3,i))/(2*dzeta));
         end
-        %-----------------------------L5-------------------------------
+
         if i == 2
             L5(j,i) = 4*(-4*visc_s(j,i-1)+3*visc_s(j,i)+visc_s(j,i+1))/(3*dx) +...
                 4*dzetadx_s(j,i)*(visc_s(j+1,i)-visc_s(j-1,i))/(2*dzeta) + ...
@@ -150,7 +140,7 @@ for i = 2:Ms-1
                 2*visc_s(1,i)/W_s(1,i)*...
                 ((W(1,i)-W(1,i-1))/(dx)+dzetadx_s(1,i)*(-3*W_s(1,i)+4*W_s(2,i)-W_s(3,i))/(2*dzeta));
         end
-        %-----------------------------L6-------------------------------
+
         if isFlowband
             if i == 2
                 L6(j,i) = 2/W_s(j,i)*((-4*visc_s(j,i-1)+3*visc_s(j,i)+visc_s(j,i+1))/(3*dx)+...
@@ -262,7 +252,7 @@ for i = 2:Ms-1
                     ((W(1,i)-W(1,i-1))/(dx)+dzetadx_s(1,i)*(-3*W_s(1,i)+4*W_s(2,i)-W_s(3,i))/(2*dzeta))^2/W_s(1,i)) - visc_s(1,i)/W_s(1,i)^2;
             end
         end
-        %------------------------------------LHS-----------------------------------
+
         if i == 2
             LHS(k,k-N-1) = 2*L3(j,i)/(3*dx*dzeta);
             LHS(k,k-N) = 8*L1(j,i)/(3*dx^2)-4*L5(j,i)/(3*dx);
@@ -298,7 +288,7 @@ for i = 2:Ms-1
         end
     end
 end
-%----------------------------Build surface BC (j=N)------------------------
+
 for i = 1:Ms
     RHS((i-1)*N+N,1) = rho*g*dhSdx_s(i);
     Ls1(i) = 4*H_s(i)*dhSdx_s(i)/(1-4*H_s(i)*dzetadx_s(N,i)*dhSdx_s(i))*dzeta/dx;
@@ -357,21 +347,21 @@ for i = 2:Ms-1
         LHS(i*N,(i+2)*N) = L3(N,i)*Ls1(i+1)/(4*dx*dzeta);
     end
 end
-%-----------------------------Build basal BC (j=1)-------------------------
+
 switch type_BBC
-    case 1 % no-slip
+    case 1
         for i = 2:Ms-1
             LHS((i-1)*N+1,(i-1)*N+1) = 1;
             RHS((i-1)*N+1,1) = 0;
         end
-    case 2 % Coulomb friction law (taub = sigma_xz)
+    case 2
         Cb = 0.84*m_max;
         Neff = epr.*(rho*g*H_s);
         for i=1:Ms
             if iter_u==1
-                ubi = 0; % basal velocity
+                ubi = 0;
             else
-                ubi = u_s_lst(1,i); % basal velocity
+                ubi = u_s_lst(1,i);
             end
             %             Lb_CFL(i) = 4*AGlen_s(1,i)*H_s(i)*dzeta*Cb(i)^n*Neff(i)^n*m_max(i)/...
             %                 (ubi*m_max(i) + Cb(i)^n*Neff(i)^n*lambda_max(i)*AGlen_s(1,i)); % /(1+(H_s(i)/W_s(1,i))^2)
@@ -381,12 +371,12 @@ switch type_BBC
         frozeni = 0;
         for i=2:Ms-1
             if iTimeStep==1
-                frozeni = frozeni + 1; % number of the cold grids
-                frozen(frozeni) = i; % position of the frozeni-th cold grid
+                frozeni = frozeni + 1;
+                frozen(frozeni) = i;
                 LHS((i-1)*N+1,(i-1)*N+1) = 1;
                 RHS((i-1)*N+1,1) = 0;
             else
-                if At_CTS(iTimeStep-1,i)~=0 % local melting
+                if At_CTS(iTimeStep-1,i)~=0
                     if i == 2
                         LHS((i-1)*N+1,(i-2)*N+1) = 8*L1(1,i)/(3*dx^2) - 4*Lb_CFL(i-1)*L3(1,i)/(6*dx*dzeta) - 4*L5(1,i)/(3*dx);
                         LHS((i-1)*N+1,(i-1)*N+1) = -12*L1(1,i)/(3*dx^2) - (2+Lb_CFL(i))*L2(1,i)/(dzeta^2) +...
@@ -406,15 +396,15 @@ switch type_BBC
                         LHS((i-1)*N+1,(i-1)*N+2) = 2*L2(1,i)/(dzeta^2);
                         LHS((i-1)*N+1,i*N+1) = L1(1,i)/(dx^2) + Lb_CFL(i+1)*L3(1,i)/(4*dx*dzeta) + L5(1,i)/(2*dx);
                     end
-                else % frozen to bedrock
-                    frozeni = frozeni + 1; % number of the cold grids
-                    frozen(frozeni) = i; % position of the frozeni-th cold grid
+                else
+                    frozeni = frozeni + 1;
+                    frozen(frozeni) = i;
                     LHS((i-1)*N+1,(i-1)*N+1) = 1;
                     RHS((i-1)*N+1,1) = 0;
                 end
             end
         end
-    case 3 % linear friction law
+    case 3
         Lb1_LFL = 4.*dzeta.*H_s.*dhBdx_s./(1 - 4.*H_s.*dhBdx_s.*dzetadx_s(1,:))./dx;
         Lb2_LFL = 2.*dzeta.*H_s.*beta2_s./visc_s(1,:)./(1 - 4.*H_s.*dhBdx_s.*dzetadx_s(1,:));
         
@@ -455,7 +445,7 @@ switch type_BBC
                 LHS((i-1)*N+1, (i+1)*N+1) = Lb1_LFL(i+1)*L3(1,i)/(4*dx*dzeta);
             end
         end
-    case 4 % linear friction law for ISMIP-HOM E2
+    case 4
         Lb1_LFL = 4.*dzeta.*H_s.*dhBdx_s./(1 - 4.*H_s.*dhBdx_s.*dzetadx_s(1,:))./dx;
         Lb2_LFL = zeros(N,Ms);
         xi_s = [xi(1), (xi(1:end-1)+xi(2:end))/2, xi(end)];
@@ -478,7 +468,7 @@ switch type_BBC
                 RHS((i-1)*N+1,1) = 0;
             end
         end
-    case 5 % simplified linear friction law
+    case 5
         Lb2_LFL = 2.*dzeta.*H_s.*beta2_s./visc_s(1,:);
         for i = 2:Ms-1
             RHS((i-1)*N+1,1) = rho*g*dhSdx_s(i);
@@ -489,15 +479,15 @@ switch type_BBC
             LHS((i-1)*N+1, i*N+1) = L1(1,i)/(dx^2) + Lb2_LFL(i+1)*L3(1,i)/(4*dx*dzeta) + L5(1,i)/(2*dx);
         end
 end
-%---------------------Build end BC (i=1, i=Ms)------------------------
+
 for j = 1:N
-    LHS(j,j) = 1; % upper limit
+    LHS(j,j) = 1;
     RHS(j,1) = 0;
     
-    LHS((Ms-1)*N+j,(Ms-1)*N+j) = 1; % lower limit
+    LHS((Ms-1)*N+j,(Ms-1)*N+j) = 1;
     RHS((Ms-1)*N+j,1) = 0;
 end
-%----------------------------Solve linear system---------------------------
+
 v = LHS\RHS;
 
 u_s = zeros(N, Ms);
@@ -510,7 +500,7 @@ for k = 1:N*Ms
     j = k-(i-1)*N;
     u_s(j,i) = v(k);
 end
-u_s(:, 1) = 0;     % Glacier head
-u_s(:, Ms) = 0;    % Glacier terminus
+u_s(:, 1) = 0;
+u_s(:, Ms) = 0;
 
 end
