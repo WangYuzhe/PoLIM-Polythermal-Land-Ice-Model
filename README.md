@@ -1,7 +1,7 @@
 # PoLIM (Polythermal Land Ice Model)
 
 ## Authors
-Wang Yuzhe (College of Resources and Environment, University of Chinese Academy of Sciences, China; College of Geography and Environment, Shandong Normal University, wangyuzhe[at]ucas.ac.cn)
+Wang Yuzhe (College of Geography and Environment, Shandong Normal University, yuzhe.wang[at]foxmail.com)
 
 Zhang Tong (State Key Laboratory of Earth Surface Processes and Resource Ecology, Beijing Normal University, tzhang[at]bnu.edu.cn)
 
