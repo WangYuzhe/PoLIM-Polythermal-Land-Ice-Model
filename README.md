@@ -2,6 +2,7 @@
 
 ## Authors
 Zhang Tong (State Key Laboratory of Earth Surface Processes and Resource Ecology, Beijing Normal University, tzhang[at]bnu.edu.cn)
+
 Wang Yuzhe (College of Geography and Environment, Shandong Normal University, yuzhe.wang[at]foxmail.com)
 
 ## Descriptions
