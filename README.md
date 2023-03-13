@@ -1,9 +1,8 @@
 # PoLIM (Polythermal Land Ice Model)
 
 ## Authors
-Wang Yuzhe (College of Geography and Environment, Shandong Normal University, yuzhe.wang[at]foxmail.com)
-
 Zhang Tong (State Key Laboratory of Earth Surface Processes and Resource Ecology, Beijing Normal University, tzhang[at]bnu.edu.cn)
+Wang Yuzhe (College of Geography and Environment, Shandong Normal University, yuzhe.wang[at]foxmail.com)
 
 ## Descriptions
 PoLIM is a 2D first-order flowband thermomechanical ice flow model. It is designed for modeling the dynamics and thermodynamics of mountain glaciers particularly for polythermal glaciers.
