@@ -1,5 +1,6 @@
 function [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_chatgpt(visc_s,visc,AGlen_s,para)
 % Wrapped Picard iteration for velocity solver
+% Based on the relaxed Picard algorithm proposed by De Smedt et al. (2010)
 % Created on 2023/12/1
 % Updated on 2025/11/1
 
@@ -7,7 +8,7 @@ global iter_u u_s_lst
 
 iter_u = 0;
 
-while true
+while iter_u<=para.iter_max
     iter_u = iter_u + 1;
     fprintf('iter_u: %d\n', iter_u)
 
@@ -17,18 +18,17 @@ while true
     % --- Begin Picard iteration ---
     if iter_u > 2
         u_s_now = u_s;
+
+        % preliminary correction vector
         Cs = u_s_now - u_s_lst;
 
-        % avoid divide-by-zero
-        % ratio_C = dot(Cs(:), C(:)) / (sumsqr(Cs) * sumsqr(C) + 1e-10);
+        denom = sqrt(sum(Cs(:).^2) * sum(C(:).^2)); % accurate in math
+        denom = max(denom, 1e-20);
 
-        nume = dot(Cs(:), C(:));
-        denom = sqrt(sum(Cs(:).^2) * sum(C(:).^2));
-        ratio_C = nume / (denom + 1e-10);
+        cos_diff_u = dot(Cs(:), C(:)) / denom;
+        cos_diff_u = max(min(cos_diff_u, 1.0), -1.0); % numerical safety
 
-        ratio_C = max(min(ratio_C, 1.0), -1.0); % numerical safety
-
-        Sita = acos(ratio_C);
+        Sita = acos(cos_diff_u); % Sita is within [0, pi]
 
         % Determine adaptive factor
         if Sita <= pi/8
@@ -39,28 +39,20 @@ while true
             mu1 = 1.0;
         end
 
+        % relaxed update
         u_s = u_s_lst + mu1 * Cs;
-
-        % diff_u_now_lst = u_s_now - u_s_lst;
-        % ratio_diff_u = sqrt(sum(diff_u_now_lst(:).^2) ./ sum(u_s_now(:).^2));
-        % if ratio_diff_u < 1e-4
-        %     break
-        % end
 
         if sumsqr(u_s_now - u_s_lst)/sumsqr(u_s_now) < 1e-4
             break
-        end
+        end     
     end
 
     if iter_u > 1
+        % actual correction vector (both u_s and u_s_lst are relaxed)
         C = u_s - u_s_lst;
     end
 
     u_s_lst = u_s;
-
-    if iter_u >= para.iter_max
-        break
-    end
 
     % --- Update viscosity and strain heating ---
     u = staggerX2main(u_s);

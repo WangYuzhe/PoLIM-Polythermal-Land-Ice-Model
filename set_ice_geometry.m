@@ -1,6 +1,6 @@
 function set_ice_geometry(geofile, para)
 
-global xi dx hS hB H W W_s M Ms N dzeta zeta
+global xi dx hS hB H W M Ms N dzeta zeta
 
 type_valley = para.type_valley;
 

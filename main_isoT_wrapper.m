@@ -81,10 +81,7 @@ for iTimeStep = 1:numTimeStep
 
     if p.is_surf_relax
         Hn = H;
-        %         SMB = 5e-3*(hS - 3150); % 3940 is for Arolla; 4000~4100 for incline
         hSn = hS;
-        zref = 2500;
-        %         SMB = calc_SMB(zref, Tma, hSn);
         SMB = zeros(1,M);
         SMB(Hn<p.Hmin) = 0;
         At_SMB(iTimeStep, :) = SMB;
@@ -107,11 +104,7 @@ for iTimeStep = 1:numTimeStep
     fprintf('Max surface velocity: %3.2f \n', max(u(end,:)))
 
     %%
-    if sum(isnan(u(:)))
-        break
-    end
-
-    if sum(H<=p.Hmin)==M
+    if sum(isnan(u(:))) || sum(H<=p.Hmin)==M
         break
     end
 
@@ -119,5 +112,5 @@ end
 toc
 
 % plot the results
-plot_uField_uSurf
+% plot_uField_uSurf
 
