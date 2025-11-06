@@ -52,7 +52,7 @@ for iTimeStep = 1:numTimeStep
     trueTime = arrayTime(iTimeStep);
 
     set_staggered_grid();
-    [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_chatgpt(visc_s, visc, AGlen_s, p);
+    [u_s, u, visc_s, visc, strainHeat] = solver_u_iter(visc_s, visc, AGlen_s, p);
 
     fprintf('Mean surface velocity: %3.2f \n', mean(u(end,:)))
     fprintf('Max surface velocity: %3.2f \n', max(u(end,:)))

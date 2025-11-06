@@ -38,18 +38,18 @@ while 1
     AGlen_s = zeros(N,Ms) + 1e-16; % [Pa-3 a-1]
     visc_s = zeros(N,Ms) + 1e13/SPY; % [Pa a]
     visc = zeros(N,M) + 1e13/SPY; % [Pa a]
-    
+
     beta2 = 1e3*ones(1,M);
     beta2_s = main2staggerX(beta2);
     iter_robin = 0;
-    
+
     fprintf('para_mu: %3.2f\n', para_mu)
-    
+
     % WHILE LOOP with specified para_mu
     cost_arr = [];
     while 1
         iter_robin = iter_robin + 1;
-        
+
         % switch the surface boundary condition
         if mod(iter_robin,2)~=0
             p.type_SBC = 'neum';
@@ -57,56 +57,14 @@ while 1
             p.type_SBC = 'diri';
         end
         fprintf('iter_robin: %d, type_SBC: %s\n', iter_robin, p.type_SBC)
-        
+
         set_staggered_grid();
-        
-        %% velocity solver
-        %
-        %
-        iter_u = 0;
-        while 1
-            iter_u = iter_u + 1;
-            fprintf('iter_u: %d\n', iter_u)
-            
-            [u_s] = solver_u(visc_s, visc, AGlen_s, p);
-            %----------------------Begin Picard iteration----------------------
-            if iter_u>2
-                u_s_now = u_s;
-                Cs = u_s_now - u_s_lst;
-                Sita = acos(Cs'*C/(sumsqr(Cs)*sumsqr(C)));
-                if isequal(Sita<=pi/8, ones(Ms,Ms))
-                    mu1 = 2.5;
-                elseif isequal(Sita>pi/8,ones(Ms,Ms)) && isequal(Sita<19*pi/20, ones(Ms,Ms))
-                    mu1 = 1;
-                elseif isequal(Sita>=19*pi/20, ones(Ms,Ms))
-                    mu1 = 0.5;
-                end
-                u_s = u_s_lst + mu1*Cs;
-                
-                if sumsqr(u_s_now - u_s_lst)/sumsqr(u_s_now)<1e-4
-                    break
-                end
-            end
-            
-            if iter_u>1
-                C = u_s - u_s_lst;
-            end
-            
-            if iter_u>=iter_max
-                break
-            end
-            
-            u_s_lst = u_s;
-            %-----------------------End Picard iteration-----------------------
-            u = staggerX2main(u_s);
-            
-            % calculate the vertical velocity
-            [w_vs, w] = get_ice_w(u_s, u);
-            
-            % calculate the strain heat
-            [visc_s, visc, strainHeat] = get_ice_viscosity(u_s, u, AGlen_s, p);
-        end
-        
+
+        [u_s, u, visc_s, visc, strainHeat] = solver_u_iter(visc_s, visc, AGlen_s, p);
+
+        % calculate the vertical velocity
+        [w_vs, w] = get_ice_w(u_s, u);
+
         %% Robin inversion
         %
         %
@@ -120,12 +78,12 @@ while 1
             wb_diri = w(1,:);
             uD = u;
             wD = w;
-            
+
             beta2 = beta2.*((abs(ub_neum)+0.1)./(abs(ub_diri)+0.1)).^para_mu;
             beta2(beta2>1e6) = 1e6; % upper bound 1e6 Pa a m-1 (Schafer et al., 2012)
             beta2(beta2<0) = 1; % lower bounda 1 Pa a m-1 (Schafer et al., 2012)
             beta2_s = main2staggerX(beta2);
-            
+
             cost_robin = sum(beta2*norm((uN-uD),'fro'));
             if iter_robin>2
                 cost_arr = [cost_arr; abs(cost_robin-cost_robin_lst)/cost_robin_lst];
@@ -136,7 +94,7 @@ while 1
             end
             cost_robin_lst = cost_robin;
         end
-        
+
         if iter_robin>15
             break
         end

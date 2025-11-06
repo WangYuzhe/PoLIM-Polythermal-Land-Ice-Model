@@ -1,4 +1,4 @@
-function [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_chatgpt(visc_s,visc,AGlen_s,para)
+function [u_s, u, visc_s, visc, strainHeat] = solver_u_iter(visc_s,visc,AGlen_s,para)
 % Wrapped Picard iteration for velocity solver
 % Based on the relaxed Picard algorithm proposed by De Smedt et al. (2010)
 % Created on 2023/12/1

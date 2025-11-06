@@ -77,7 +77,7 @@ for iTimeStep = 1:numTimeStep
     set_staggered_grid();
 
     % calculate the horizontal velocity
-    [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_chatgpt(visc_s, visc, AGlen_s, p);
+    [u_s, u, visc_s, visc, strainHeat] = solver_u_iter(visc_s, visc, AGlen_s, p);
 
     % calculate the vertical velocity
     [w_vs, w] = get_ice_w(u_s, u);
