@@ -1,6 +1,6 @@
-function [u_s, u, visc_s, visc, strainHeat] = solver_u_iter(visc_s,visc,AGlen_s,para)
+function [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_smedt(visc_s,visc,AGlen_s,para)
 % Wrapped Picard iteration for velocity solver
-% Based on the relaxed Picard algorithm proposed by De Smedt et al. (2010)
+% Based on the relaxed Picard algorithm proposed by Smedt et al. (2010)
 % Created on 2023/12/1
 % Updated on 2025/11/1
 
@@ -44,7 +44,7 @@ while iter_u<=para.iter_max
 
         if sumsqr(u_s_now - u_s_lst)/sumsqr(u_s_now) < 1e-4
             break
-        end     
+        end
     end
 
     if iter_u > 1
