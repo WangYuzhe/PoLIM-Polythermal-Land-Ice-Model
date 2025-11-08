@@ -18,10 +18,10 @@ Tref = para.Tref;
 % Tsbc(hS>zcts+slope) = T0;
 
 %% temperate ice experiment
-T0 = 273.15 - 5; % 冰川末端年均气温
+T0 = 273.15 - 3; % 冰川末端年均气温
 z0 = hS(end);
 
-zfirn = 4980; %median(hS); % 替换为每年的雪线高度
+zfirn = median(hS); %; % 替换为每年的雪线高度
 Tsbc = zeros(1,M);
 for i=1:M
     if hS(i)<=zfirn

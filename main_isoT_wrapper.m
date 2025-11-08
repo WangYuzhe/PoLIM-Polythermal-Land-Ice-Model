@@ -59,8 +59,8 @@ for iTimeStep = 1:numTimeStep
 
     set_staggered_grid();
 
-    % [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_smedt(visc_s, visc, AGlen_s, p);
-    [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_pimentel(visc_s, visc, AGlen_s, p);
+    [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_smedt(visc_s, visc, AGlen_s, p);
+    % [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_pimentel(visc_s, visc, AGlen_s, p);
     %% ICE THICKNESS EVOLUTION
     %
     %

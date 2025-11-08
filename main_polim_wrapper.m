@@ -29,7 +29,7 @@ p.type_valley = 'trapz';
 
 %% GLACIER GEOMETRY
 %
-set_ice_geometry('./geo_inputs/geo_lhg12_glate_relax.mat', p);
+set_ice_geometry('./geo_inputs/geo_arolla.mat', p);
 
 %% TIME SETTING
 %
