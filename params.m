@@ -30,8 +30,8 @@ p.is_greve_drain = 1; % water drainage in temperate ice using the Greve method
 p.is_blatter_meltCTS = 1; % corrector step for cold layer (Blatter&Greve, 2015)
 
 %% parameters related to Coulomb sliding law
-p.lambda_max = 4; % wavelength of the dominant bedrock bumps [m]
-p.m_max = 0.5; % maximum slope of the dominant bedrock bumps []; ref: 0.5
+p.lambda_max = 6; % wavelength of the dominant bedrock bumps [m]
+p.m_max = 0.25; % maximum slope of the dominant bedrock bumps []; ref: 0.25
 p.kflot = 0.1; % a fraction of flotation; N=Pi-Pw, Pw=kflot*Pi, N=(1-kflot)*Pi
 
 %% parameters related to subglacial hydrology
