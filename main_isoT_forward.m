@@ -41,6 +41,20 @@ p.CFL = 0.4;
 p.dt_H_max = dt_u;
 p.dt_H_min = 0.001;
 
+%% SMB coupling
+% PDD forcing is used when climate_file is available. Otherwise auto mode
+% retains an executable example by using the gradient fallback.
+smb_driver = struct();
+smb_driver.mode = 'auto';
+smb_driver.fallback = 'gradient';
+smb_driver.climate_file = 'gfdl_hist.mat';
+smb_driver.calendar_start_year = 2008;
+smb_driver.model_start_time = startTime;
+smb_driver.hydro_start_month = 10;
+smb_driver.zref = 2943;
+smb_driver.state = struct();
+smb_driver.last = struct();
+
 %% INITIALIZATION
 %
 % Related to Ney-Glen law
@@ -73,10 +87,8 @@ for iTimeStep = 1:numTimeStep
     % [u_s, u, visc_s, visc, strainHeat] = solve_u_smedt(visc_s, visc, AGlen_s, p);
     [u_s, u, visc_s, visc, strainHeat] = solve_u_pimentel(visc_s, visc, AGlen_s, p);
     
-    zela = median(hS(is_active));
-    grad_smb = 5.0e-2;
-    m_b = calc_smb_gradient(hS, zela, grad_smb);
-    m_b(~is_active) = 0;
+    [m_b, smb_driver] = run_smb( ...
+        hS, is_active, smb_driver, arrayTime(iTimeStep), p);
 
     % Store the state at arrayTime(iTimeStep), before projecting it to the
     % next output time.

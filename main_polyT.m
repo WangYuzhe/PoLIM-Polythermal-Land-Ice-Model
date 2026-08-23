@@ -46,6 +46,20 @@ p.CFL = 0.4;
 p.dt_H_max = dt_u;
 p.dt_H_min = 0.001;
 
+%% SMB coupling
+smb_driver = struct();
+smb_driver.mode = 'auto';
+smb_driver.fallback = 'fujita';
+smb_driver.climate_file = 'gfdl_hist.mat';
+smb_driver.calendar_start_year = 2008;
+smb_driver.model_start_time = startTime;
+smb_driver.hydro_start_month = 10;
+smb_driver.zref = 2943;
+smb_driver.fujita_zref = 2500;
+smb_driver.Tma = -5.5;
+smb_driver.state = struct();
+smb_driver.last = struct();
+
 n_sub = round(dt_u / dt_E);
 
 %% INITIALIZATION
@@ -91,8 +105,8 @@ for iTimeStep = 1:numTimeStep
     set_staggered_grid();
 
     % calculate the horizontal velocity
-    [u_s, u, visc_s, visc, strainHeat] = solver_u_smedt(visc_s, visc, AGlen_s, p);
-    % [u_s, u, visc_s, visc, strainHeat] = solver_u_pimentel(visc_s, visc, AGlen_s, p);
+    [u_s, u, visc_s, visc, strainHeat] = solve_u_smedt(visc_s, visc, AGlen_s, p);
+    % [u_s, u, visc_s, visc, strainHeat] = solve_u_pimentel(visc_s, visc, AGlen_s, p);
 
     % calculate the vertical velocity
     [w_vs, w] = get_ice_w(u_s, u);
@@ -132,8 +146,8 @@ for iTimeStep = 1:numTimeStep
     fprintf('Mean surface velocity: %3.2f \n', mean(u(end,is_active)))
     fprintf('Max surface velocity: %3.2f \n', max(u(end,is_active)))
 
-    SMB = calc_smb_fujita(2500, -5.5, hS);
-    SMB(~is_active) = 0;
+    [SMB, smb_driver] = run_smb( ...
+        hS, is_active, smb_driver, arrayTime(iTimeStep), p);
 
     % Store the state at the current output time before projection.
     At_u(:,:,iTimeStep) = u;
@@ -195,7 +209,7 @@ for iTimeStep = 1:numTimeStep
             if t_local < dt_u - 1e-12
                 set_staggered_grid();
                 [u_s, u, visc_s, visc, strainHeat] = ...
-                    solver_u_iter_smedt(visc_s, visc, AGlen_s, p);
+                    solve_u_smedt(visc_s, visc, AGlen_s, p);
                 [dt_CFL, umax] = calc_thk_CFL_step(u_s, p, dx);
             end
         end
