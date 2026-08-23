@@ -58,7 +58,7 @@ switch type_valley
         W = sqrt(2*zeta - zeta.^2)*Wsurf;
         W(1,:) = W(2,:)/2; % basal half-width
     case 'trapz' % in fact is 'trapezoid'
-        Wbasal = 10.0*ones(1,M); % basal half-width [m]
+        Wbasal = 5.0*ones(1,M); % basal half-width [m]
         W = ones(N,1)*Wbasal + zeta*(Wsurf - Wbasal);
     case 'rect' % in fact is 'rectangle'
         W = ones(N,1)*Wsurf;

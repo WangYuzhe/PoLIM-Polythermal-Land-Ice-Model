@@ -23,7 +23,8 @@ p.type_valley = 'rect';
 p.Hmin = 0.0;
 p.is_greve_drain = 0;
 p.is_auto_enth_BBC = 1;
-p.type_enth_BBC = 'COLD_base_dry';
+p.type_enth_BBC = 'basalBC_COLD_base_dry';
 p.layers = 201;
 p.is_enth_trans = 1;
+p.is_blatter_meltCTS = 1;
 end

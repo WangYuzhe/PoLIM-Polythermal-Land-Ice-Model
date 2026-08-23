@@ -72,7 +72,7 @@ while 1
     while 1
         iter_u = iter_u + 1;
         
-        [u_s] = solver_u(visc_s, visc, AGlen_s, p);
+        [u_s] = solver_u_core(visc_s, visc, AGlen_s, p);
         %----------------------Begin Picard iteration----------------------
         if iter_u>2
             u_s_now = u_s;

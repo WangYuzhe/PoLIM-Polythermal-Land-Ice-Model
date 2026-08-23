@@ -15,7 +15,7 @@ p.eta_w = 1.8e-3; % water viscosity (Hewitt&Schoof, 2017, 1.8e-3) [Pa s]
 p.iter_max = 50; % maximum iterations for velocity solver []
 p.Hmin = 0.1; % minimal ice thickness in case of singularity [m]
 p.layers = 31; % vertical layers []
-
+p.lapserate = -6.5e-3; % lapse rate [K km-1]
 %% parameters related to thermodynamics
 p.Tref = 223.15; % Reference temperature [K]
 p.kc = 2.1; % cold ice conductivity [W m-1 K-1]
@@ -26,8 +26,6 @@ p.k0 = 1e-12; % permeability factor (unconstrained, Hewitt&Schoof, 2017, Tab. 1)
 p.alpha_TEMP = 2.0; % exponent in compaction pressure model (Hewitt&Schoof, 2017); unconstrained, range: 2~3
 p.Qgeo = 0.06; % geothermal heat flux [W m-2]
 p.omega_max = 0.03; % upper bound of water content in temperate ice
-p.is_greve_drain = 1; % water drainage in temperate ice using the Greve method
-p.is_blatter_meltCTS = 1; % corrector step for cold layer (Blatter&Greve, 2015)
 
 %% parameters related to Coulomb sliding law
 p.lambda_max = 6; % wavelength of the dominant bedrock bumps [m]
@@ -43,6 +41,11 @@ p.hr = 0.1; % height of bedrock bumps [m]; ref: 0.1
 p.ktransm = 4e-4; % transmissivity coefficient [], larger value, larger N; ref: 4e-4
 p.ev = 1e-5; % englacial void fraction (de Fleurian, 2018, eq. 10)
 p.Hw_crit = 0.15; % critcal water sheet thickness (Pimentel & Flowers, 2010, Tab. 1)
+
+%% parameters for numerical stability
+p.CFL = 0.5;        % CFL safety factor (0.3–0.8 typical), unitless
+p.dt_H_max = 1.0;   % upper limit of time step for thickness evolution [a]
+p.dt_H_min = 0.05;  % lower limit of time step for thickness evolution [a]
 
 %% options related to velocity solver
 p.is_flowband = 1; % FLOWBAND MODE

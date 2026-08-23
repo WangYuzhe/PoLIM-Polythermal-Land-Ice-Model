@@ -34,10 +34,14 @@ set_ice_geometry('./geo_inputs/geo_arolla.mat', p);
 %% TIME SETTING
 %
 %
-dt = 1; % time step for velocity solver [a]
+dt_u = 1; % time step for velocity solver [a]
+dt_E = 0.1; % time step for enthalpy solver [a]
+
 startTime = 1; % start time
 endTime = 20; % end time of model run [a]
-[arrayTime, numTimeStep] = set_time_step(dt, startTime, endTime);
+[arrayTime, numTimeStep] = set_time_step(dt_u, startTime, endTime);
+
+n_sub = round(dt_u / dt_E);
 
 %% INITIALIZATION
 %
@@ -79,7 +83,7 @@ for iTimeStep = 1:numTimeStep
     % calculate the horizontal velocity
     [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_smedt(visc_s, visc, AGlen_s, p);
     % [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_pimentel(visc_s, visc, AGlen_s, p);
-    
+
     % calculate the vertical velocity
     [w_vs, w] = get_ice_w(u_s, u);
 
@@ -88,10 +92,11 @@ for iTimeStep = 1:numTimeStep
         % calculate friction heat
         frictionHeat = calc_frictionHeat(u_s, u, visc_s, p);
 
-        % calculate ice enthalpy
-        [E, T, omega, Kappa_vs, CTS, is_TEMP, thk_TEMP, thk_w, m_basal, qw_TEMP, qw_TEMP_darcy] =...
-            solver_enthalpy_MEGM(u, u_s, w, w_vs, strainHeat, frictionHeat, dt, Esbc, Eini, p);
-
+        for i_sub = 1:n_sub
+            % calculate ice enthalpy
+            [E, T, omega, Kappa_vs, CTS, is_TEMP, thk_TEMP, thk_w, m_basal, qw_TEMP, qw_TEMP_darcy] =...
+                solver_enthalpy_MEGM(u, u_s, w, w_vs, strainHeat, frictionHeat, dt_E, Esbc, Eini, p);
+        end
         % update the flow rate factor
         AGlen_s = get_AGlen(T, omega, CTS, p);
 
@@ -99,6 +104,7 @@ for iTimeStep = 1:numTimeStep
         if any(isnan(u(:))) || any(isnan(E(:)))
             break
         end
+
     end
 
     % print results
@@ -119,7 +125,7 @@ for iTimeStep = 1:numTimeStep
         SMB(Hn<p.Hmin) = 0;
         At_SMB(iTimeStep, :) = SMB;
 
-        Hnp1 = get_evolution_continuity(Hn, u, SMB, dt);
+        Hnp1 = get_evolution_continuity(Hn, u, SMB, dt_u);
         Hnp1(Hnp1<p.Hmin) = p.Hmin;
         hS = hB + Hnp1;
         H = Hnp1;
@@ -132,7 +138,7 @@ for iTimeStep = 1:numTimeStep
         SMB(Hn<p.Hmin) = 0;
         At_SMB(iTimeStep, :) = SMB;
 
-        hSnp1 = get_evolution_kinematic(hSn, u, w, SMB, dt);
+        hSnp1 = get_evolution_kinematic(hSn, u, w, SMB, dt_u);
         Hnp1 = hSnp1-hB;
         Hnp1(Hnp1<p.Hmin) = p.Hmin;
         hS = hB + Hnp1;
@@ -155,6 +161,7 @@ for iTimeStep = 1:numTimeStep
         enth_lst.is_TEMP = is_TEMP;
         enth_lst.qw_TEMP_darcy = qw_TEMP_darcy;
         enth_lst.omega = omega;
+        enth_lst.CTS = CTS;
 
         %         At_E(:,:,iTimeStep) = E;
         %         At_T(:,:,iTimeStep) = T;
