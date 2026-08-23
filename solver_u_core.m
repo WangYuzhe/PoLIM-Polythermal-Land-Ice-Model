@@ -1,4 +1,4 @@
-function [u_s] = solver_u_core(visc_s, visc, AGlen_s, para)
+function [u_s, linear_system] = solver_u_core(visc_s, visc, AGlen_s, para)
 % BETA VERSION
 
 % Inputs:
@@ -11,7 +11,8 @@ function [u_s] = solver_u_core(visc_s, visc, AGlen_s, para)
 
 global xi Ms N dx dzeta zeta H_s hB_s W W_s...
     dzetadx dzetadx_s dhSdx_s dhBdx_s...
-    iter_u iTimeStep u_s_lst enth_lst hWL Neff_lst beta2_s usurf_s_obs
+    iter_u u_s_lst enth_lst hWL Neff_lst beta2_s usurf_s_obs...
+    is_active_s i_term_s
 
 % physical constants and parameters
 rhoi = para.rhoi;
@@ -28,6 +29,34 @@ is_flowband = para.is_flowband;
 f_nye = para.f_nye;
 type_SBC = para.type_SBC;
 
+switch lower(type_SBC)
+    case {'neum', 'neumann'}
+        type_SBC = 'Neumann';
+    case {'diri', 'dirichlet'}
+        type_SBC = 'Dirichlet';
+    otherwise
+        error('solver_u_core:InvalidSurfaceBoundaryCondition', ...
+            'type_SBC must be Neumann (neum) or Dirichlet (diri).')
+end
+
+has_uobs = ~isempty(usurf_s_obs);
+if strcmp(type_SBC, 'Dirichlet') && ~has_uobs
+    error('solver_u_core:MissingSurfaceVelocity', ...
+        'usurf_s_obs is required for a Dirichlet surface condition.')
+end
+
+if isempty(Neff_lst)
+    Neff_lst = (1-kflot).*(rhoi*g*H_s);
+end
+
+has_beta2 = ~isempty(beta2_s);
+is_LFlaw = strcmpi(type_BBC, 'LFlaw') || ...
+    strcmpi(type_BBC, 'LFlaw_simple');
+if is_LFlaw && ~has_beta2
+    error('solver_u_core:MissingBasalFriction', ...
+        'beta2_s is required for the selected linear friction law.')
+end
+
 % coefficients for linear systems
 L1 = 4*visc_s;
 L2 = 4*visc_s.*dzetadx_s.^2 + visc_s./(ones(N,1)*H_s).^2;
@@ -41,8 +70,10 @@ Ls1 = zeros(1,Ms);
 Ls2 = zeros(1,Ms);
 LsW = zeros(1,Ms);
 
-LHS = zeros(N*Ms, N*Ms);
-RHS = zeros(N*Ms,1);
+nUnk = N*Ms;
+nzMax = 20*nUnk;
+LHS = spalloc(nUnk, nUnk, nzMax);
+RHS = zeros(nUnk,1);
 
 % shallow ice approximation (SIA)
 sia = @(y,x) -2*AGlen_s(y,x)*(rhoi*g*dhSdx_s(x))^n/(n+1) *...
@@ -365,9 +396,9 @@ for i = 2:Ms-1
 end
 %%
 %----------------------------Build surface BC (j=N)------------------------
-if strcmp(type_SBC, 'neum')
+if strcmp(type_SBC, 'Neumann')
     for i = 1:Ms
-        RHS((i-1)*N+N,1) = rhoi*g*dhSdx_s(i);
+        RHS((i-1)*N+N,1) = f_nye*rhoi*g*dhSdx_s(i);
         Ls1(i) = 4*H_s(i)*dhSdx_s(i)/(1-4*H_s(i)*dzetadx_s(N,i)*dhSdx_s(i))*dzeta/dx;
         Ls2(i) = 4*H_s(i)*dhSdx_s(i)/(1-4*H_s(i)*dzetadx_s(N,i)*dhSdx_s(i))*dzeta/W_s(N,i);
 
@@ -434,11 +465,14 @@ if strcmp(type_SBC, 'neum')
             LHS(i*N,(i+2)*N) = L3(N,i)*Ls1(i+1)/(4*dx*dzeta);
         end
     end
-else % Dirichlet
+elseif strcmp(type_SBC, 'Dirichlet')
     for i = 2:Ms-1
         LHS(i*N,i*N) = 1;
         RHS(i*N,1) = usurf_s_obs(i);
     end
+else
+    error('solver_u_core:InvalidSurfaceBoundaryCondition', ...
+        'type_SBC must be Neumann or Dirichlet.')
 end
 %%
 %-----------------------------Build basal BC (j=1)-------------------------
@@ -449,11 +483,17 @@ if strcmpi(type_BBC,'zero')
     end
 elseif strcmpi(type_BBC, 'CFlaw_polyT')
     Cb = 0.84*m_max;
-    Neff_lst = (1-kflot).*(rhoi*g*H_s);
+
+    allowSlip = false(1,Ms);
+    if isstruct(enth_lst) && isfield(enth_lst, 'CTS') && ...
+            ~isempty(enth_lst.CTS)
+        nSlip = min(Ms, numel(enth_lst.CTS));
+        allowSlip(1:nSlip) = logical(enth_lst.CTS(1:nSlip));
+    end
 
     % basal sliding velocity
-    if iTimeStep==1 && iter_u==1
-        ub_s = zeros(1,Ms);
+    if iter_u==1 && isempty(u_s_lst)
+        ub_s = zeros(1,Ms) + 1e-6;
     else
         ub_s = u_s_lst(1,:);
     end
@@ -465,11 +505,11 @@ elseif strcmpi(type_BBC, 'CFlaw_polyT')
         (m_max.*ub_s + (Cb.^n).*lambda_max.*AGlen_s(1,:).*(Neff_lst.^n)) + reg_schoof;
 
     for i=2:Ms-1
-        if iTimeStep==1
+        if ~allowSlip(i)
             LHS((i-1)*N+1,(i-1)*N+1) = 1;
             RHS((i-1)*N+1,1) = 0;
-        else
-            if enth_lst.CTS(i)~=0 % local melting
+        else % temperate bed allowing slip
+            RHS((i-1)*N+1,1) = f_nye*rhoi*g*dhSdx_s(i);
                 if i==2
                     LHS((i-1)*N+1,(i-2)*N+1) = 8*L1(1,i)/(3*dx^2) -...
                         4*Lb_CFL(i-1)*L3(1,i)/(6*dx*dzeta) -...
@@ -508,23 +548,14 @@ elseif strcmpi(type_BBC, 'CFlaw_polyT')
                         Lb_CFL(i+1)*L3(1,i)/(4*dx*dzeta) +...
                         L5(1,i)/(2*dx);
                 end
-            else % frozen to bedrock
-                LHS((i-1)*N+1,(i-1)*N+1) = 1;
-                RHS((i-1)*N+1,1) = 0;
-            end
         end
     end
 elseif strcmpi(type_BBC, 'CFlaw_isoT')
     Cb = 0.84*m_max;
 
-    % Effective pressure (N)
-    if iTimeStep==1
-        Neff_lst = (1-kflot).*(rhoi*g*H_s);
-    end
-
     % basal sliding velocity
-    if iTimeStep==1 && iter_u==1
-        ub_s = zeros(1,Ms);
+    if iter_u==1 && isempty(u_s_lst)
+        ub_s = zeros(1,Ms) + 1e-6;
     else
         ub_s = u_s_lst(1,:);
     end
@@ -535,7 +566,7 @@ elseif strcmpi(type_BBC, 'CFlaw_isoT')
         (m_max.*ub_s + (Cb.^n).*lambda_max.*AGlen_s(1,:).*(Neff_lst.^n)) + reg_schoof;
 
     for i=2:Ms-1
-        RHS((i-1)*N+1,1) = rhoi*g*dhSdx_s(i);
+        RHS((i-1)*N+1,1) = f_nye*rhoi*g*dhSdx_s(i);
         if i==2
             LHS((i-1)*N+1,(i-2)*N+1) = 8*L1(1,i)/(3*dx^2) -...
                 4*Lb_CFL(i-1)*L3(1,i)/(6*dx*dzeta) -...
@@ -580,7 +611,7 @@ elseif strcmpi(type_BBC, 'LFlaw') % linear friction law
     Lb2_LFL = 2*dzeta.*H_s.*beta2_s./visc_s(1,:)./(1-4*H_s.*dhBdx_s.*dzetadx_s(1,:));
 
     for i = 2:Ms-1
-        RHS((i-1)*N+1,1) = rhoi*g*dhSdx_s(i);
+        RHS((i-1)*N+1,1) = f_nye*rhoi*g*dhSdx_s(i);
         if i==2
             LHS((i-1)*N+1, (i-2)*N+1) = 8*L1(1,i)/(3*dx^2) +...
                 8*Lb1_LFL(i)*L2(1,i)/(3*dzeta^2) +...
@@ -636,7 +667,7 @@ elseif strcmpi(type_BBC, 'LFlaw') % linear friction law
 elseif strcmpi(type_BBC, 'LFlaw_simple') % simplified linear friction law
     Lb2_LFL = 2.*dzeta.*H_s.*beta2_s./visc_s(1,:);
     for i = 2:Ms-1
-        RHS((i-1)*N+1,1) = rhoi*g*dhSdx_s(i);
+        RHS((i-1)*N+1,1) = f_nye*rhoi*g*dhSdx_s(i);
         LHS((i-1)*N+1, (i-2)*N+1) = L1(1,i)/(dx^2) -...
             Lb2_LFL(i-1)*L3(1,i)/(4*dx*dzeta) - L5(1,i)/(2*dx);
         LHS((i-1)*N+1, (i-1)*N+1) = -2*L1(1,i)/(dx^2) -...
@@ -653,7 +684,7 @@ elseif strcmpi(type_BBC, 'LFlaw_E2') % linear friction law for ISMIP-HOM E2
     for i = 2:Ms-1
         if xi_s(i) >= 2200 && xi_s(i) <= 2500
             %             if  xi(i) >= 2200 && xi(i) <= 2500
-            RHS((i-1)*N+1,1) = rhoi*g*dhSdx_s(i);
+            RHS((i-1)*N+1,1) = f_nye*rhoi*g*dhSdx_s(i);
 
             LHS((i-1)*N+1, (i-3)*N+1) = Lb1_LFL(i-1)*L3(1,i)/(4*dx*dzeta);
             LHS((i-1)*N+1, (i-2)*N+1) = L1(1,i)/(dx^2) +...
@@ -676,7 +707,8 @@ elseif strcmpi(type_BBC, 'LFlaw_E2') % linear friction law for ISMIP-HOM E2
         end
     end
 else
-    disp('ERROR: type_BBC should be zero, CFlaw_polyT, CFlaw_isoT, LFlaw, LFlaw_simple, LFlaw_E2')
+    error(['type_BBC must be zero, CFlaw_polyT, CFlaw_isoT, ', ...
+        'LFlaw, LFlaw_simple, or LFlaw_E2.'])
 end
 %%
 %---------------------Build lateral BC (head, i=1)------------------------
@@ -689,19 +721,63 @@ end
 % lower limit
 % zero velocity at the terminus
 if strcmpi(type_LBC,'zero')
-    if isempty(usurf_s_obs)
-        for j = 1:N
-            LHS((Ms-1)*N+j,(Ms-1)*N+j) = 1;
-            RHS((Ms-1)*N+j,1) = 0; % sia(j,Ms)
-        end
+    if isempty(i_term_s) || i_term_s <= 0
+        i_term_bc = Ms;
     else
-        for j = 1:N
-            LHS((Ms-1)*N+j,(Ms-1)*N+j) = 1;
-            RHS((Ms-1)*N+j,1) = usurf_s_obs(Ms);
+        i_term_bc = i_term_s;
+    end
+
+    if isempty(is_active_s)
+        idx_inactive = [];
+    else
+        idx_inactive = find(~is_active_s);
+    end
+
+    u_term = 0;
+    if has_uobs && i_term_bc == Ms && isempty(idx_inactive)
+        u_term = usurf_s_obs(Ms);
+    end
+
+    % Clear all previously assembled couplings on the moving terminus and
+    % dormant fixed-grid cells before imposing true Dirichlet rows.
+    idx_zero = unique([i_term_bc, idx_inactive]);
+    rows = reshape((idx_zero(:)-1)*N + (1:N), [], 1);
+    keep = true(nUnk, 1);
+    keep(rows) = false;
+    LHS = spdiags(double(keep), 0, nUnk, nUnk)*LHS + ...
+        spdiags(double(~keep), 0, nUnk, nUnk);
+    RHS(rows,1) = 0;
+    term_rows = (i_term_bc-1)*N + (1:N);
+    RHS(term_rows,1) = u_term;
+
+elseif strcmpi(type_LBC,'stressFree')
+    % Zero longitudinal normal strain at the downstream boundary:
+    % du/dx|z = du/dx|zeta + dzetadx*du/dzeta = 0.
+    for j = 1:N
+        idx = (Ms-1)*N + j;
+        idx_upstream = (Ms-2)*N + j;
+        LHS(idx,:) = 0;
+        LHS(idx,idx) = 1/dx;
+        LHS(idx,idx_upstream) = -1/dx;
+        RHS(idx,1) = 0;
+
+        if j == 1
+            LHS(idx,idx) = LHS(idx,idx) - ...
+                3*dzetadx_s(j,Ms)/(2*dzeta);
+            LHS(idx,idx+1) = 4*dzetadx_s(j,Ms)/(2*dzeta);
+            LHS(idx,idx+2) = -dzetadx_s(j,Ms)/(2*dzeta);
+        elseif j == N
+            LHS(idx,idx) = LHS(idx,idx) + ...
+                3*dzetadx_s(j,Ms)/(2*dzeta);
+            LHS(idx,idx-1) = -4*dzetadx_s(j,Ms)/(2*dzeta);
+            LHS(idx,idx-2) = dzetadx_s(j,Ms)/(2*dzeta);
+        else
+            LHS(idx,idx+1) = dzetadx_s(j,Ms)/(2*dzeta);
+            LHS(idx,idx-1) = -dzetadx_s(j,Ms)/(2*dzeta);
         end
     end
 
-    % calving front
+% calving front
 elseif strcmpi(type_LBC,'calv')
     % hWL: elevation of water level
     Lcf1 = zeros(N,1);
@@ -745,26 +821,19 @@ elseif strcmpi(type_LBC,'calv')
             LHS((Ms-1)*N+j+2,(Ms-1)*N+j) = -L3(j,Ms)*dzetadx_s(j+1,Ms)/(4*dzeta^2);
         end
     end
+else
+    error('solver_u_core:InvalidLateralBoundaryCondition', ...
+        'type_LBC must be zero, stressFree, or calv.')
 end
 
 %% Solve linear system
-%
+linear_system = struct('LHS', LHS, 'RHS', RHS);
+if isfield(para, 'assemble_only') && para.assemble_only
+    u_s = [];
+    return
+end
+
 v = LHS\RHS;
-
-u_s = zeros(N, Ms);
-for k = 1:N*Ms
-    if fix(k/N)==k/N
-        i = k/N;
-    else
-        i = fix(k/N) + 1;
-    end
-    j = k-(i-1)*N;
-    
-    u_s(j,i) = v(k);
-end
-
-if ~isempty(usurf_s_obs)
-    u_s(:,Ms) = usurf_s_obs(end);    % Glacier terminus
-end
+u_s = reshape(v, N, Ms);
 
 end

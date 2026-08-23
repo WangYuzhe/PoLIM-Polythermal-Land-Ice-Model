@@ -1,26 +1,30 @@
-function [u_s, u, visc_s, visc, strainHeat] = solver_u_iter_smedt_test(visc_s,visc,AGlen_s,para)
+function [u_s, u, visc_s, visc, strainHeat] = solve_u_smedt(visc_s,visc,AGlen_s,para)
 % Wrapped Picard iteration for velocity solver
 % Based on the relaxed Picard algorithm proposed by Smedt et al. (2010)
 % Created on 2023/12/1
 % Updated on 2025/11/1
 
-global u_s_lst
+global iter_u u_s_lst u_solver_converged u_solver_relative_change...
+    u_solver_iterations
 
 iter_u = 0;
+u_solver_converged = false;
+u_solver_relative_change = Inf;
 
 while iter_u<=para.iter_max
     iter_u = iter_u + 1;
     fprintf('iter_u: %d\n', iter_u)
 
     % --- Core velocity solver ---
-    u_s = solver_u_core_test(visc_s, visc, AGlen_s, para);
-    u_s_now = u_s;
+    u_s = solver_u_core(visc_s, visc, AGlen_s, para);
 
-    % preliminary correction vector
-    Cs = u_s - u_s_lst;
+    % --- Begin Picard iteration ---
+    if iter_u > 2
+        u_s_now = u_s;
 
-    if iter_u>1
-        % --- Begin Picard iteration ---
+        % preliminary correction vector
+        Cs = u_s_now - u_s_lst;
+
         denom = sqrt(sum(Cs(:).^2) * sum(C(:).^2)); % accurate in math
         denom = max(denom, 1e-20);
 
@@ -41,17 +45,24 @@ while iter_u<=para.iter_max
         % relaxed update
         u_s = u_s_lst + mu1 * Cs;
 
-        if sumsqr(u_s_now - u_s_lst)/sumsqr(u_s_now) < 1e-4
+        u_solver_relative_change = sumsqr(u_s_now - u_s_lst) / ...
+            max(sumsqr(u_s_now), eps);
+        if u_solver_relative_change < 1e-4
+            u_solver_converged = true;
             break
         end
     end
 
-    % actual correction vector (both u_s and u_s_lst are relaxed)
-    C = u_s - u_s_lst;
+    if iter_u > 1
+        % actual correction vector (both u_s and u_s_lst are relaxed)
+        C = u_s - u_s_lst;
+    end
+
     u_s_lst = u_s;
 
     % --- Update viscosity and strain heating ---
     u = staggerX2main(u_s);
     [visc_s, visc, strainHeat] = get_ice_viscosity(u_s, u, AGlen_s, para);
 end
+u_solver_iterations = iter_u;
 end
