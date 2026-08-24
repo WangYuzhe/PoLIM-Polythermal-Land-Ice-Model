@@ -119,7 +119,7 @@ for iTimeStep = 1:numTimeStep
         for i_sub = 1:n_sub
             % calculate ice enthalpy
             [E, T, omega, Kappa_vs, CTS, is_TEMP, thk_TEMP, thk_w, m_basal, qw_TEMP, qw_TEMP_darcy] =...
-                solver_enthalpy_MEGM(u, u_s, w, w_vs, strainHeat, frictionHeat, dt_E, Esbc, Eini, p);
+                solve_enth_MEGM(u, u_s, w, w_vs, strainHeat, frictionHeat, dt_E, Esbc, Eini, p);
         end
         % update the flow rate factor
         AGlen_s = get_AGlen(T, omega, CTS, p);

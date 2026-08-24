@@ -1,10 +1,10 @@
-function [E, T, omega, Kappa_vs, CTS, is_TEMP, thk_TEMP, thk_w, m_basal, qw_TEMP, qw_TEMP_darcy] =...
-    solver_enthalpy_MEGM(u, u_s, w, w_vs, strain_heat, friction_heat, dt, Esbc, Eini, p)
+function [E, T, omega, Kappa_vs, CTS, is_TEMP, thk_TEMP, thk_w, m_basal, qw_TEMP_drain_greve, qw_TEMP_diffu] = ...
+    solve_enth_SEGM(u, u_s, w, w_vs, strain_heat, friction_heat, dt, Esbc, Eini, p)
 % Date: 2017-7-12
 % Author: Wang Yuzhe
 % Calculate the glacier enthalpy field
 % Use the enthalpy definition by Aschwanden et al. (2012)
-% Use the water drainage model proposed by Hewitt&Schoof (2017)
+% Use the water drainage model proposed by Greve (2009)
 % Use the one-layer melting CTS scheme proposed by Blatter&Greve (2015)
 % <is_TEMP>, <thk_TEMP>, and <thk_w> determine the basal boundary condition
 
@@ -32,7 +32,9 @@ global M N dx dzeta zeta H dzetadx iTimeStep enth_lst
         LT2(1) = 1;
         LT3(1) = 0;
         RT(1) = Epmp_i(1);
-        % RT(1) = 2009.0*(273.15 - 273.0) + 3.34e5*0.01; % specified for Hewitt slab
+
+        % RT(1) = Epmp_i(1) + 3.34e5*0.01;
+
         LT = spdiags([[LT1(2:end);0], LT2, [0;LT3(1:end-1)]], [-1,0,1], N, N);
     end
 
@@ -98,21 +100,21 @@ m_basal = zeros(1,M);
 CTS = zeros(1,M);
 Kappa_i = zeros(N,1);
 Kappa_vs = zeros(N-1,M);
-qw_TEMP = zeros(N-1,M);
-qw_TEMP_darcy = zeros(N-1,M);
 qw_TEMP_diffu = zeros(N-1,M);
+qw_TEMP_drain_greve = zeros(1,M);
+rate_TEMP_water = zeros(N,1);
 
 if iTimeStep==1
     Elst = Eini;
     Kappa_vs_lst = Kc*ones(N-1,M);
-    qw_TEMP_darcy_lst = zeros(N-1,M);
+    omega_lst = zeros(N,M);
     is_TEMP_lst = zeros(1,M);
     thk_TEMP_lst = zeros(1,M);
     thk_w_lst = zeros(1,M);
 else
     Elst = enth_lst.E;
     Kappa_vs_lst = enth_lst.Kappa_vs;
-    qw_TEMP_darcy_lst = enth_lst.qw_TEMP_darcy;
+    omega_lst = enth_lst.omega;
     is_TEMP_lst = enth_lst.is_TEMP;
     thk_TEMP_lst = enth_lst.thk_TEMP;
     thk_w_lst = enth_lst.thk_w;
@@ -123,23 +125,27 @@ for i=1:M
     H_i = H(i);
     Tpmp_i = 273.15 - p.betaCC*rhoi*g*H_i*(1-zeta); % <N * 1>
     Epmp_i = Cp*(Tpmp_i - Tref); % <N * 1>
-
+    
     for j = 2:N-1
-        if M==1 % ice slab case (no horizontal advection and diffusion)
+        if p.is_greve_drain
+            rate_TEMP_water(j) = drain_temp_water_greve(omega_lst(j,i))/SPY; % [s-1]
+        else
+            rate_TEMP_water(j) = 0.0;
+        end
+        
+        if M==1 % ice slab (no horizontal advection and diffusion)
             RT(j) = is_enth_trans*Elst(j,i)/dt + strain_heat(j,i)/rhoi -...
-                rhow/rhoi*Lw*(qw_TEMP_darcy_lst(j,i)-...
-                qw_TEMP_darcy_lst(j-1,i))/(H_i*dzeta);
+                rhow/rhoi*Lw*rate_TEMP_water(j);
         else
             if i==1
                 RT(j) = is_enth_trans*Elst(j,i)/dt + strain_heat(j,i)/rhoi;
             else
                 RT(j) = is_enth_trans*Elst(j,i)/dt + strain_heat(j,i)/rhoi -...
-                    rhow/rhoi*Lw*(qw_TEMP_darcy_lst(j,i)-...
-                    qw_TEMP_darcy_lst(j-1,i))/(H_i*dzeta) +...
+                    rhow/rhoi*Lw*rate_TEMP_water(j) +...
                     u_s(j,i)*Elst(j,i-1)/dx;
             end
         end
-
+        
         if coeff(j,i)>0
             LT1(j) = -coeff_vs(j-1,i)/dzeta - Kappa_vs_lst(j-1,i)/(H_i^2*dzeta^2);
             LT2(j) = is_enth_trans/dt + u_s(j,i)/dx + coeff_vs(j-1,i)/dzeta +...
@@ -279,20 +285,18 @@ for i=1:M
     thk_w(i) = thk_w_lst(i) + dt/SPY*m_basal(i);
 
     is_TEMP(i) = (E(1,i)>=Epmp_i(1)) & (thk_w(i)>0);
-
+    
     % diffusive water flux through temperate ice
     qw_TEMP_diffu(:,i) = -Kt*(omega(2:end,i)-omega(1:end-1,i))/(H_i*dzeta);
-
-    % darcy water flux through temperate ice; negative value
-    qw_TEMP_darcy(:,i) = -p.k0*omega(2:end,i).^p.alpha_TEMP*(rhow-rhoi)*g/p.eta_w;
-
-    % total water flux through temperate ice
-    qw_TEMP(:,i) = qw_TEMP_diffu(:,i) + qw_TEMP_darcy(:,i);
-
+    
+    % vertically integrated drainage [m s-1]
+    % drain instantaneously to the bed using the Ralf Greve's function
+    qw_TEMP_drain_greve(i) = sum(rate_TEMP_water)*H_i*dzeta; % [m s-1]
+    
     % set the upper bound of the water content (3%)
-    %     index1 = omega(:,i) > 0.03;
-    %     index2 = omega(:,i) <= 0.03;
-    %     omega(:,i) = index1*0.03 + index2.*omega(:,i);
+    %     index1 = omega_i > 3/100;
+    %     index2 = omega_i <= 3/100;
+    %     omega_i = index1*3/100 + index2.*omega_i;
 end
 
 end
