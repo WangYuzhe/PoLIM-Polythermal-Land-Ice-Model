@@ -146,6 +146,15 @@ well-documented model extensions are welcome. When proposing a change, please
 explain its scientific motivation, assumptions, and validation, and include a
 minimal reproducible example when practical.
 
+## License
+
+PoLIM_classic is made available under the
+[PolyForm Noncommercial License 1.0.0](LICENSE). Noncommercial research, use,
+modification, and redistribution are permitted subject to the license terms.
+Commercial use is not licensed and requires separate written permission from
+the applicable copyright holder or holders. Redistributions must also preserve
+the required attribution notice in [NOTICE](NOTICE).
+
 ## Disclaimer
 
 PoLIM is research software. Its users are responsible for evaluating numerical
